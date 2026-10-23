@@ -64,6 +64,17 @@
                 <textarea name="description" required rows="4" x-model="description" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow shadow-sm resize-y" placeholder="Describe the task, requirements, and any specific skills needed..."></textarea>
             </div>
             
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="whenText" class="block text-sm font-semibold text-slate-800 mb-2">When</label>
+                    <input type="text" id="whenText" name="whenText" required maxlength="120" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow shadow-sm" placeholder="e.g. Tue &amp; Thu, 4–5 pm">
+                </div>
+                <div>
+                    <label for="whereText" class="block text-sm font-semibold text-slate-800 mb-2">Where</label>
+                    <input type="text" id="whereText" name="whereText" required maxlength="120" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow shadow-sm" placeholder="e.g. Library, 2nd floor, or Remote">
+                </div>
+            </div>
+
             <div class="bg-slate-50 border border-slate-100 rounded-xl p-5 mt-6">
                 <label class="flex items-center gap-3 cursor-pointer group mb-4">
                     <input type="checkbox" name="hasTimeline" value="true" x-model="hasTimeline" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">

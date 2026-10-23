@@ -1,6 +1,7 @@
 package com.gigmarket.servlet;
 
 import com.gigmarket.auth.Auth;
+import com.gigmarket.gigs.Categories;
 import com.gigmarket.util.DatabaseUtil;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -30,9 +31,22 @@ public class PostGigServlet extends HttpServlet {
         String deadlineStr = request.getParameter("deadline");
         String completionDeadlineStr = request.getParameter("completionDeadline");
         String category = request.getParameter("category");
+        String whenText = request.getParameter("whenText");
+        String whereText = request.getParameter("whereText");
+        whenText = whenText == null ? "" : whenText.trim();
+        whereText = whereText == null ? "" : whereText.trim();
 
-        if (title == null || title.trim().isEmpty() || description == null || budgetStr == null || budgetStr.trim().isEmpty()) {
-            response.sendRedirect("post-gig.jsp?error=Missing required fields");
+        if (title == null || title.trim().isEmpty() || description == null || budgetStr == null || budgetStr.trim().isEmpty()
+                || whenText.isEmpty() || whereText.isEmpty()) {
+            response.sendRedirect("post-gig.jsp?error=Fill in every field: title, description, pay, when and where.");
+            return;
+        }
+        if (whenText.length() > 120 || whereText.length() > 120 || title.trim().length() > 200) {
+            response.sendRedirect("post-gig.jsp?error=Keep when and where under 120 characters, and the title under 200.");
+            return;
+        }
+        if (!Categories.known(category)) {
+            response.sendRedirect("post-gig.jsp?error=Choose one of the categories.");
             return;
         }
 
@@ -49,7 +63,7 @@ public class PostGigServlet extends HttpServlet {
                 }
             }
 
-            String sql = "INSERT INTO Gigs (poster_id, title, description, budget, deadline, completion_deadline, category) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO Gigs (poster_id, title, description, budget, deadline, completion_deadline, category, when_text, where_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, posterId);
             stmt.setString(2, title.trim());
@@ -69,6 +83,8 @@ public class PostGigServlet extends HttpServlet {
             }
 
             stmt.setString(7, category);
+            stmt.setString(8, whenText);
+            stmt.setString(9, whereText);
 
             stmt.executeUpdate();
             response.sendRedirect("poster-dashboard.jsp?message=Gig created successfully.");

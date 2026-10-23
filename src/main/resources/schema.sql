@@ -33,6 +33,8 @@ CREATE TABLE Gigs (
     deadline DATE,
     completion_deadline DATE,
     category VARCHAR(100),
+    when_text VARCHAR(120) NULL,   -- e.g. "Tue & Thu, 4–5 pm" (free text from the faculty member)
+    where_text VARCHAR(120) NULL,  -- e.g. "Library, 2nd floor" or "Remote"
     status ENUM('Open', 'Closed') DEFAULT 'Open',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (poster_id) REFERENCES Students(student_id)
@@ -74,3 +76,11 @@ INSERT INTO Students (name, email, password_hash, role, status, university_id) V
 -- Admin: there is no seeded admin (a known admin password in a public repo would let anyone in).
 -- Join with your own Woxsen email, then run once:
 --   UPDATE Students SET role = 'admin', status = 'active' WHERE email = 'you@woxsen.edu.in';
+
+-- Example gigs for local testing only (posted by the demo faculty account). Delete with the demo accounts.
+INSERT INTO Gigs (poster_id, title, description, budget, deadline, completion_deadline, category, when_text, where_text) VALUES
+ (2, 'Tutor first-years in C pointers', 'Example gig for testing. Two one-hour sessions a week for three first-year students who are stuck on pointers and arrays.', 350, DATE_ADD(CURDATE(), INTERVAL 8 DAY), DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'Tutoring', 'Tue & Thu, 4–5 pm', 'Library, 2nd floor'),
+ (2, 'Invigilate the Saturday mock test', 'Example gig for testing. Help the exam cell invigilate a three-hour mock test for 60 students.', 800, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 2 DAY), 'Event Support', 'Sat, 9 am–12 pm', 'Block C, room 204'),
+ (2, 'Poster for the robotics expo', 'Example gig for testing. An A3 poster for the robotics expo. The club logo and event details are provided; you choose the look.', 1500, DATE_ADD(CURDATE(), INTERVAL 10 DAY), DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'Design', 'Your time, 3 days', 'Remote'),
+ (2, 'Fix the lab booking form', 'Example gig for testing. The lab booking form loses entries when two people book at once. Find and fix the bug.', 2500, DATE_ADD(CURDATE(), INTERVAL 12 DAY), DATE_ADD(CURDATE(), INTERVAL 20 DAY), 'Development', 'Weekends, about 6 hours', 'Remote'),
+ (2, 'Proofread the placement brochure', 'Example gig for testing. Check the 12-page placement brochure for spelling and consistency.', 600, DATE_ADD(CURDATE(), INTERVAL 6 DAY), DATE_ADD(CURDATE(), INTERVAL 9 DAY), 'Writing', 'Your time, 2 days', 'Placement cell, Block A');

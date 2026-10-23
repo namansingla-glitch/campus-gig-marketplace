@@ -93,6 +93,51 @@ echo "Passwords are stored as hashes"
 PLAIN=$($MYSQL -N -e "SELECT COUNT(*) FROM Students WHERE password_hash NOT LIKE 'pbkdf2_sha256\$%';" 2>/dev/null)
 [ "$PLAIN" = "0" ] && ok "every password is a PBKDF2 hash" || bad "$PLAIN accounts have a password that is not a PBKDF2 hash"
 
+echo "Feed"
+req anon GET /browse-gigs; snap feed; expect_status "feed (visitor)" 200; expect_body "feed" "Tutor first-years in C pointers"; expect_body "feed" '₹2,500'; expect_body "feed" 'data-cat="0">Writing'; expect_no_body "feed" "dummy"
+req anon GET "/browse-gigs?category=Writing"; expect_body "Writing filter" "Proofread the placement brochure"; expect_no_body "Writing filter" "Tutor first-years"
+req anon GET "/browse-gigs?category=Writing&category=Tutoring"; expect_body "two categories" "Proofread"; expect_body "two categories" "Tutor first-years"; expect_no_body "two categories" "Poster for the robotics expo"
+req anon GET "/browse-gigs?minPay=1000"; expect_body "pay at least 1000" "Fix the lab booking form"; expect_no_body "pay at least 1000" "Tutor first-years"
+req anon GET "/browse-gigs?minPay=500%20rs"; snap feed-error; expect_status "pay that is not a number" 200; expect_body "pay that is not a number" "Type a number of rupees"
+req anon GET "/browse-gigs?category=%27%20OR%201%3D1%20--"; expect_body "unknown category is ignored" "Tutor first-years"
+req anon GET "/browse-gigs?category=Writing&minPay=100000"; expect_body "nothing matches" "No open gigs match"
+$MYSQL -e "INSERT INTO Gigs (poster_id, title, description, budget, category, when_text, where_text) VALUES (2, '<script>alert(1)</script>', '<img src=x onerror=alert(2)>', 100, 'Writing', '<b>when</b>', 'where');" 2>/dev/null
+req anon GET /browse-gigs; expect_body "feed escapes titles" "&lt;script&gt;alert(1)&lt;/script&gt;"; expect_no_body "feed escapes titles" "<script>alert(1)"
+XSS=$($MYSQL -N -e "SELECT MAX(gig_id) FROM Gigs;" 2>/dev/null)
+req anon GET "/gig?id=$XSS"; expect_no_body "detail escapes" "<img src=x"; expect_no_body "detail escapes" "<b>when</b>"
+
+echo "Gig detail"
+req anon GET "/gig?id=abc"; expect_status "gig with a bad id" 404
+req anon GET "/gig?id=999999"; expect_status "gig that does not exist" 404
+req anon GET "/gig?id=3"; snap gig-visitor; expect_status "gig (visitor)" 200; expect_body "gig (visitor)" "Log in to apply"; expect_body "gig (visitor)" "What needs doing"
+req anon GET "/apply-gig.jsp?gigId=3"; expect_loc "old apply link" "gig?id=3"
+req naman POST /login --data-urlencode email=naman@woxsen.edu.in --data-urlencode password=password123; expect_loc "student logs in again" "student-dashboard.jsp"
+req naman GET "/gig?id=3"; snap gig-student; expect_body "gig (student)" "Apply for this gig"
+req naman POST /apply-gig -F gigId=3 -F pitchText=; expect_loc "apply with no pitch" "error=pitch"
+BAD="$(mktemp --suffix=.jsp)"; echo '<% out.print(1); %>' > "$BAD"
+req naman POST /apply-gig -F gigId=3 -F "pitchText=I made the fest poster." -F "portfolioFile=@$BAD;filename=../../shell.jsp"; expect_loc "apply with a .jsp file" "error=type"
+PDF="$(mktemp --suffix=.pdf)"; printf '%%PDF-1.4\n%%EOF\n' > "$PDF"
+req naman POST /apply-gig -F gigId=3 -F "pitchText=I made the fest poster." -F "portfolioFile=@$PDF;filename=../../My CV.pdf"; expect_loc "apply" "gig?id=3&applied=1"
+req naman GET "/gig?id=3&applied=1"; snap gig-applied; expect_body "after applying" "Application sent"; expect_no_body "after applying" "Send application"
+STORED=$($MYSQL -N -e "SELECT portfolio_path FROM Applications WHERE gig_id=3 ORDER BY application_id DESC LIMIT 1;" 2>/dev/null)
+[[ "$STORED" =~ /[0-9a-f-]{36}\.pdf$ && "$STORED" != *..* ]] && ok "upload stored under a safe random name" || bad "upload stored as '$STORED'"
+req naman POST /apply-gig -F gigId=3 -F "pitchText=Again"; expect_loc "apply twice" "error=already"
+$MYSQL -e "UPDATE Gigs SET status='Closed' WHERE gig_id=5;" 2>/dev/null
+req naman GET "/gig?id=5"; expect_body "closed gig" "This gig is closed"
+req naman POST /apply-gig -F gigId=5 -F "pitchText=Hi"; expect_loc "apply to a closed gig" "error=closed"
+req anon GET /browse-gigs; expect_no_body "closed gigs leave the feed" "Proofread the placement brochure"
+req riddhi GET "/gig?id=3"; snap gig-owner; expect_body "gig (owner)" "Review applicants (1)"; expect_no_body "gig (owner)" "Apply for this gig"
+
+echo "Post a gig with When and Where"
+req riddhi POST /post-gig --data-urlencode "title=Help at the open day" --data-urlencode "description=Guide visitors." --data-urlencode budget=700 --data-urlencode "category=Event Support" --data-urlencode "whenText=Sun, 10 am–2 pm" --data-urlencode "whereText=Main gate"
+expect_loc "post a gig" "poster-dashboard.jsp"
+WHERE=$($MYSQL -N -e "SELECT CONCAT(when_text,' | ',where_text) FROM Gigs WHERE title='Help at the open day';" 2>/dev/null)
+[ "$WHERE" = "Sun, 10 am–2 pm | Main gate" ] && ok "when and where saved" || bad "when/where saved as '$WHERE'"
+req riddhi POST /post-gig --data-urlencode "title=No place" --data-urlencode "description=x" --data-urlencode budget=100 --data-urlencode category=Design --data-urlencode "whenText=Today"
+expect_loc "post without where" "post-gig.jsp?error="
+req riddhi POST /post-gig --data-urlencode "title=Bad category" --data-urlencode "description=x" --data-urlencode budget=100 --data-urlencode category=Hacking --data-urlencode "whenText=a" --data-urlencode "whereText=b"
+expect_loc "post with an unknown category" "post-gig.jsp?error="
+
 echo "Log out"
 req naman GET /logout; expect_loc "log out" "login.jsp?error=out"
 req naman GET /student-dashboard.jsp; expect_loc "dashboard after log out" "login.jsp"

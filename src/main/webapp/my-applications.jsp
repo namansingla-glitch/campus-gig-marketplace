@@ -52,7 +52,7 @@
             <div class="p-6 md:p-8 hover:bg-slate-50/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <!-- Left: Info -->
                 <div class="flex-1">
-                    <a href="apply-gig.jsp?gigId=<%= rs.getInt("gig_id") %>" class="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors leading-tight block mb-1">
+                    <a href="gig?id=<%= rs.getInt("gig_id") %>" class="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors leading-tight block mb-1">
                         <%= rs.getString("title") %>
                     </a>
                     

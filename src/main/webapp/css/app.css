@@ -1,0 +1,58 @@
+/* Campus gig: logged-in app pages (feed, gig detail; dashboards follow in 9b). Kit tokens only.
+   Components (nav, page header, filter bar, gig cards, detail) come from kit/kit-components.css. */
+
+.page--app {
+  gap: var(--kit-space-6);
+}
+
+.page--app > * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.app-main {
+  display: grid;
+  gap: var(--kit-space-6);
+  min-width: 0;
+}
+
+/* Room for the fixed bottom tabs on phones. */
+@media (max-width: 560px) {
+  .page--app {
+    padding-bottom: calc(var(--kit-space-16) + 56px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Gig detail: the apply form is a pinned note too. */
+.apply-form {
+  display: grid;
+  gap: var(--kit-space-5);
+  padding: var(--kit-space-8) var(--kit-space-6) var(--kit-space-6);
+}
+
+.apply-form h2 {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-font-size-2xl);
+}
+
+.apply-form .k-btn,
+.gig-status .k-btn {
+  justify-self: start;
+}
+
+.gig-status {
+  display: grid;
+  gap: var(--kit-space-3);
+}
+
+.gig-status p {
+  margin: 0;
+}
+
+.gig-status__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-3);
+  align-items: center;
+}
