@@ -69,9 +69,43 @@ jobs:
         if: always()
         run: |
           [ -d pages ] || exit 0
-          tar -czf p.tgz pages && base64 -w0 p.tgz > p.b64
-          n=$(( ($(wc -c < p.b64) + 49999) / 50000 )); i=0
-          while [ $i -lt $n ]; do echo "::notice title=pages $((i+1))/$n::$(cut -c$((i*50000+1))-$(((i+1)*50000)) p.b64)"; i=$((i+1)); done
+          tar -cJf p.txz pages && base64 -w0 p.txz > p.b64
+          echo "::notice title=pages size::$(wc -c < p.b64) chars in $(( ($(wc -c < p.b64) + 3999) / 4000 )) chunks"
+
+      - name: TEMPORARY page dump part 1
+        if: always()
+        run: |
+          [ -f p.b64 ] || exit 0
+          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
+          for i in $(seq 0 8); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
+
+      - name: TEMPORARY page dump part 2
+        if: always()
+        run: |
+          [ -f p.b64 ] || exit 0
+          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
+          for i in $(seq 9 17); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
+
+      - name: TEMPORARY page dump part 3
+        if: always()
+        run: |
+          [ -f p.b64 ] || exit 0
+          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
+          for i in $(seq 18 26); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
+
+      - name: TEMPORARY page dump part 4
+        if: always()
+        run: |
+          [ -f p.b64 ] || exit 0
+          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
+          for i in $(seq 27 35); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
+
+      - name: TEMPORARY page dump part 5
+        if: always()
+        run: |
+          [ -f p.b64 ] || exit 0
+          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
+          for i in $(seq 36 44); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
 
       - name: Keep the rendered pages (for visual checks)
         if: always()
