@@ -1,6 +1,6 @@
-version: dev-1b5bc22
+version: v1-lite.3
 skin: campus-board
-exported: 2026-10-23T22:20:08.651Z
+exported: 2026-10-23T23:34:45.739Z
 files:
   effects/auto.js
   effects/count-up.js
