@@ -30,12 +30,12 @@ expect_header() { [[ "${HEADERS,,}" == *"${2,,}"* ]] && ok "$1 has header '$2'" 
 csrf() { printf '%s' "$BODY" | grep -o 'name="csrf" value="[^"]*"' | head -1 | sed 's/.*value="//; s/"$//'; }
 # Pages built with the kit never load Tailwind, Alpine or Inter, and show no invented figures.
 expect_clean() {
-  for x in cdn.tailwindcss.com alpinejs 'family=Inter' dummy 'Top Hired' '#4 of 37' '↑ 2' 'Done · paid' 'Insights'; do expect_no_body "$1" "$x"; done
+  for x in 'Â' cdn.tailwindcss.com alpinejs 'family=Inter' dummy 'Top Hired' '#4 of 37' '↑ 2' 'Done · paid' 'Insights'; do expect_no_body "$1" "$x"; done
 }
 expect_no_body(){ [[ "$BODY" != *"$2"* ]] && ok "$1 does not contain '$2'" || bad "$1: page contains '$2'"; }
 
 echo "Pages"
-req anon GET /;                          snap landing; expect_status "landing" 200; expect_body "landing" "pick a gig."
+req anon GET /;                          snap landing; expect_status "landing" 200; expect_no_body "landing" "Â"; expect_body "landing" "pick a gig."
 req anon GET /login.jsp;                 snap login; expect_status "log in page" 200; expect_no_body "log in page" 'name="role"'
 req anon GET "/login.jsp?error=%3Cscript%3Ealert(1)%3C/script%3E"; expect_no_body "log in page with a crafted error" "<script>alert"
 req anon GET /register;                  snap register; expect_status "join page" 200; expect_body "join page" "Woxsen University"; expect_no_body "join page" 'name="role"'
