@@ -68,5 +68,5 @@ Log in again and you land on **Approvals**.
 ## Security notes
 
 - Passwords are stored as salted PBKDF2-HMAC-SHA256 hashes; 6 characters minimum.
-- Every servlet checks the role from the session, and faculty can only review or hire on their own gigs.
+- Every servlet that shows or changes private data checks the role from the session (browsing open gigs is public), and faculty can only review or hire on their own gigs.
 - Admin decisions carry a per-session form token.
