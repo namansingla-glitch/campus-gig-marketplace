@@ -68,7 +68,9 @@ Log in again and you land on **Approvals**.
 
 - `mvn verify`: unit tests for password hashing, the email rules, join, log in, approvals, pay and dates, uploads, statuses, the post-a-gig rules and rewards.
 - `tests/smoke.sh`: drives a running app over HTTP: every page, join and log in, approvals, who can open what, apply → hire / not picked → mark done, portfolio downloads, form tokens, escaping, no invented figures and no Tailwind left.
-- CI (`.github/workflows/ci.yml`) runs both on every push, with MySQL and Tomcat on GitHub's machines.
+- `tests/e2e` (Playwright): every page as visitor, student and faculty in Chromium and WebKit (Safari's engine), desktop and phone, light and dark: no sideways scroll, axe accessibility check, the kit fonts load, one h1 and no heading jumps, tap targets at least 44 px, no console errors, still readable with scripts off, reduced motion. Run against a running app: `cd tests/e2e && npm ci && npx playwright install chromium webkit && BASE=http://localhost:8080/gig-marketplace npx playwright test`.
+- `tests/e2e/lighthouse.mjs`: Lighthouse scores for the main pages on phone settings.
+- CI (`.github/workflows/ci.yml`) runs all of these on every push, with MySQL and Tomcat on GitHub's machines.
 
 ## Security notes
 

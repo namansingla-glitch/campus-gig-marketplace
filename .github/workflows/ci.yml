@@ -17,7 +17,7 @@ jobs:
   build-and-smoke:
     name: Build, unit tests, smoke test in Tomcat
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     services:
       mysql:
         image: mysql:8.0
@@ -58,7 +58,64 @@ jobs:
           done
           echo "::error::Tomcat did not start"; tail -80 tomcat.log; exit 1
 
+      # Browser checks run before the smoke test: they only read pages and log in, on the fresh example data.
+      - name: Browser test tools
+        working-directory: tests/e2e
+        run: npm ci --no-audit --no-fund
+
+      - name: Let apt wait for the runner's own updates
+        # The runner's startup apt job holds the dpkg lock; Playwright's --with-deps would fail at once (kit, 24 Oct).
+        run: echo 'DPkg::Lock::Timeout "240";' | sudo tee /etc/apt/apt.conf.d/99-wait-for-lock
+
+      - name: Install Playwright browsers (Chromium + WebKit)
+        working-directory: tests/e2e
+        run: |
+          for i in 1 2 3; do
+            timeout 300 npx playwright install --with-deps chromium webkit > pw-install.log 2>&1 && exit 0
+            grep -iE 'error|failed|E: ' pw-install.log | tail -4 | cut -c1-300 | sed 's/^/::error::playwright install: /'
+            echo "::warning::Playwright browser install try $i failed or took over 5 minutes; retrying"
+            sleep 10
+          done
+          echo "::error::Playwright browsers could not be installed after 3 tries"; exit 1
+
+      - name: Browser checks (every page, Chromium + WebKit, desktop + phone, light + dark, scripts off)
+        id: browser
+        working-directory: tests/e2e
+        env:
+          BASE: http://localhost:8080/gig-marketplace
+          CI: "true"
+        run: npx playwright test
+
+      - name: Browser checks summary (names each failure; every browser and size must have run)
+        if: always()
+        working-directory: tests/e2e
+        run: |
+          [ -f results.json ] || { echo "::error::no browser results"; exit 1; }
+          node -e '
+            const r = require("./results.json"); const per = {}; const fails = [];
+            const walk = (s) => { for (const c of s.suites ?? []) walk(c); for (const sp of s.specs ?? []) for (const t of sp.tests) {
+              const p = t.projectName; per[p] ??= { ok: 0, run: 0 };
+              const st = t.results.at(-1)?.status; if (st === "skipped") continue; per[p].run++;
+              if (st === "passed") per[p].ok++; else fails.push(`${p} › ${sp.title}: ${(t.results.at(-1)?.error?.message ?? st).split("\n").slice(0, 6).join(" | ").replace(/\x1b\[[0-9;]*m/g, "").slice(0, 600)}`);
+            } };
+            walk(r);
+            const want = ["chromium-desktop", "chromium-phone", "webkit-desktop", "webkit-phone"];
+            console.log("::notice::browser checks: " + want.map((p) => `${p} ${per[p]?.ok ?? 0}/${per[p]?.run ?? 0}`).join(" · "));
+            for (const f of fails.slice(0, 9)) console.log("::error::" + f);
+            if (fails.length || want.some((p) => !per[p]?.run)) process.exit(1);
+          '
+
+      - name: Lighthouse (main pages, phone settings; scores as notices, limits once measured)
+        id: lighthouse
+        if: success() || steps.browser.outcome == 'failure'
+        working-directory: tests/e2e
+        env:
+          BASE: http://localhost:8080/gig-marketplace
+        run: node lighthouse.mjs
+
       - name: Smoke test (join, log in, approvals, access rules)
+        # Runs even when a browser check or Lighthouse failed, so one red step does not hide the others.
+        if: success() || steps.browser.outcome == 'failure' || steps.lighthouse.outcome == 'failure'
         env:
           BASE: http://localhost:8080/gig-marketplace
           MYSQL: mysql -h127.0.0.1 -uroot -proot gig_marketplace
