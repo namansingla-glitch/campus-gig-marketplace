@@ -1,0 +1,12 @@
+<%-- The rewards tier note: tier name, points with the rule, and a meter to the next tier. Set Rewards.Tier tier first.
+     Leaves the card open so a page can add a link inside it: close it with </div>. --%>
+<div class="k-card tier" style="--k-pin: var(--kit-color-category-1)">
+  <span class="k-pin" aria-hidden="true"></span>
+  <p class="tier__name"><%= tier.name %></p>
+  <p class="tier__pts"><%= tier.points %> point<%= tier.points == 1 ? "" : "s" %> · <%= com.gigmarket.gigs.Rewards.RULE %></p>
+<% if (tier.nextAt != null) {
+     int pct = Math.min(100, tier.points * 100 / tier.nextAt); %>
+  <div class="k-meter"><div class="k-meter__bar" role="progressbar" aria-label="Points toward <%= tier.next %>" aria-valuemin="0" aria-valuemax="<%= tier.nextAt %>" aria-valuenow="<%= tier.points %>"><div class="k-meter__fill" style="--k-pct:<%= pct %>%"></div></div><div class="k-meter__text"><span><%= tier.points %> / <%= tier.nextAt %></span><span><%= tier.toNext() %> to <%= tier.next %></span></div></div>
+<% } else { %>
+  <p class="tier__pts">Top tier.</p>
+<% } %>

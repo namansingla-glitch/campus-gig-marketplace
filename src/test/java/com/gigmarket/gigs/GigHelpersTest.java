@@ -65,6 +65,18 @@ class GigHelpersTest {
     }
 
     @Test
+    void portfolioDownloadsOpenOnlyOurOwnStoredNames() {
+        String n = Uploads.storedName("cv.pdf");
+        assertEquals(n, Uploads.storedFile("/tmp/gig-portfolios/" + n));
+        assertEquals("pdf", Uploads.extension("/tmp/gig-portfolios/" + n));
+        assertEquals("application/pdf", Uploads.contentType("pdf"));
+        assertNull(Uploads.storedFile("/etc/passwd"));
+        assertNull(Uploads.storedFile("/tmp/gig-portfolios/../../etc/" + n + ".jsp"));
+        assertNull(Uploads.storedFile("/tmp/gig-portfolios/My CV.pdf"), "old-style names are refused, never opened");
+        assertNull(Uploads.storedFile(null));
+    }
+
+    @Test
     void datesReadLikeAPerson() {
         LocalDate today = LocalDate.of(2026, 10, 23);
         assertEquals("Today", Dates.day(Date.valueOf(today), today));

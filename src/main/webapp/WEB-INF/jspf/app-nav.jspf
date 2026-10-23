@@ -6,11 +6,11 @@
     String[][] navLinks;   // label, href, key
     String[][] navTabs;    // label, href, key, icon
     if ("poster".equals(navRole)) {
-        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"Your gigs", "/poster-dashboard.jsp", "mine"}};
-        navTabs = new String[][] {{"Gigs", "/browse-gigs", "gigs", "feed"}, {"Your gigs", "/poster-dashboard.jsp", "mine", "mine"}, {"Post", "/post-gig.jsp", "post", "post"}};
+        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"Your gigs", "/your-gigs", "mine"}};
+        navTabs = new String[][] {{"Gigs", "/browse-gigs", "gigs", "feed"}, {"Your gigs", "/your-gigs", "mine", "mine"}, {"Post", "/post-gig", "post", "post"}};
     } else if ("student".equals(navRole)) {
-        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"My gigs", "/my-applications", "mine"}, {"Profile", "/student-profile.jsp", "profile"}};
-        navTabs = new String[][] {{"Gigs", "/browse-gigs", "gigs", "feed"}, {"My gigs", "/my-applications", "mine", "mine"}, {"Profile", "/student-profile.jsp", "profile", "profile"}};
+        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"My gigs", "/my-applications", "mine"}, {"Profile", "/profile", "profile"}};
+        navTabs = new String[][] {{"Gigs", "/browse-gigs", "gigs", "feed"}, {"My gigs", "/my-applications", "mine", "mine"}, {"Profile", "/profile", "profile", "profile"}};
     } else if ("admin".equals(navRole)) {
         navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"Approvals", "/admin/approvals", "approvals"}};
         navTabs = null;
@@ -21,7 +21,7 @@
     String navWho = navName == null ? null : navName + ("poster".equals(navRole) ? " · faculty" : "admin".equals(navRole) ? " · admin" : " · student");
 %>
 <header class="k-top">
-  <a class="k-word" href="<%= ctx %>/">campus<span class="k-word__dot">.</span>gig</a>
+  <a class="k-word" href="<%= ctx %>/<%= navRole == null ? "" : com.gigmarket.auth.Auth.home(navRole) %>">campus<span class="k-word__dot">.</span>gig</a>
   <nav class="k-top__links" aria-label="Main">
 <% for (String[] l : navLinks) { %>
     <a href="<%= ctx + l[1] %>"<%= l[2].equals(navCurrent) ? " aria-current=\"page\"" : "" %>><%= l[0] %></a>
@@ -34,7 +34,7 @@
 <% } else { %>
     <span class="k-top__who"><%= com.gigmarket.auth.Auth.esc(navWho) %></span>
 <%   if ("poster".equals(navRole)) { %>
-    <a class="k-btn" href="<%= ctx %>/post-gig.jsp">Post a gig</a>
+    <a class="k-btn" href="<%= ctx %>/post-gig">Post a gig</a>
 <%   } %>
     <a class="k-btn k-btn--ghost" href="<%= ctx %>/logout">Log out</a>
 <% } %>

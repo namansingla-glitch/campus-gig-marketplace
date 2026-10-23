@@ -1,5 +1,6 @@
-/* Campus gig: logged-in app pages (feed, gig detail; dashboards follow in 9b). Kit tokens only.
-   Components (nav, page header, filter bar, gig cards, detail) come from kit/kit-components.css. */
+/* Campus gig: logged-in app pages (feed, gig detail, dashboards, forms, profile, errors). Kit tokens only.
+   Components (nav, page header, filters, gig cards, detail, list rows, status, meter, achievements, form, error page)
+   come from kit/kit-components.css; only campus-specific pieces live here. */
 
 .page--app {
   gap: var(--kit-space-6);
@@ -55,4 +56,38 @@
   flex-wrap: wrap;
   gap: var(--kit-space-3);
   align-items: center;
+}
+
+/* Rewards tier: a pinned note with the tier name, the points rule and the meter to the next tier. */
+.tier {
+  display: grid;
+  gap: var(--kit-space-4);
+  padding: var(--kit-space-8) var(--kit-space-6) var(--kit-space-6);
+}
+
+.tier__name {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-font-size-3xl);
+  font-weight: var(--kit-font-weight-heavy);
+  letter-spacing: -0.02em;
+}
+
+.tier__pts {
+  margin: 0;
+  color: var(--kit-color-text-muted);
+}
+
+.tier__link {
+  justify-self: start;
+}
+
+/* One-line result after an action ("Marked done."). */
+.notice {
+  padding: var(--kit-space-4) var(--kit-space-5);
+  box-shadow: inset 4px 0 0 var(--kit-color-success);
+}
+
+.notice .k-card__body {
+  margin: 0;
 }

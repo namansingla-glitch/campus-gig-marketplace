@@ -1,97 +1,77 @@
 package com.gigmarket.servlet;
 
 import com.gigmarket.auth.Auth;
-import com.gigmarket.gigs.Categories;
+import com.gigmarket.gigs.GigForm;
 import com.gigmarket.util.DatabaseUtil;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.time.LocalDate;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Post a gig (/post-gig). Faculty only (role from the database at log in, never from a form).
+ * GET shows the form; POST checks every field and, when something is wrong, shows the form again with what was typed,
+ * a summary that links to each problem and the message next to its field (status 400).
+ */
 @WebServlet("/post-gig")
 public class PostGigServlet extends HttpServlet {
+    static final String VIEW = "/WEB-INF/views/post-gig.jsp";
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        if (Auth.require(request, response, "poster") == null) return;
+        request.setAttribute("form", GigForm.empty());
+        request.getRequestDispatcher(VIEW).forward(request, response);
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Faculty only (role from the database at log in, never from a form).
         Integer posterId = Auth.require(request, response, "poster");
         if (posterId == null) return;
+        if (!Auth.requireCsrf(request, response)) return;
 
-        String title = request.getParameter("title");
-        String description = request.getParameter("description");
-        String budgetStr = request.getParameter("budget");
-        String deadlineStr = request.getParameter("deadline");
-        String completionDeadlineStr = request.getParameter("completionDeadline");
-        String category = request.getParameter("category");
-        String whenText = request.getParameter("whenText");
-        String whereText = request.getParameter("whereText");
-        whenText = whenText == null ? "" : whenText.trim();
-        whereText = whereText == null ? "" : whereText.trim();
-
-        if (title == null || title.trim().isEmpty() || description == null || budgetStr == null || budgetStr.trim().isEmpty()
-                || whenText.isEmpty() || whereText.isEmpty()) {
-            response.sendRedirect("post-gig.jsp?error=Fill in every field: title, description, pay, when and where.");
-            return;
-        }
-        if (whenText.length() > 120 || whereText.length() > 120 || title.trim().length() > 200) {
-            response.sendRedirect("post-gig.jsp?error=Keep when and where under 120 characters, and the title under 200.");
-            return;
-        }
-        if (!Categories.known(category)) {
-            response.sendRedirect("post-gig.jsp?error=Choose one of the categories.");
-            return;
-        }
-
+        GigForm form = GigForm.read(request::getParameter, LocalDate.now());
         try (Connection conn = DatabaseUtil.getConnection()) {
-            // Duplicate Open Gig check (Rule #13)
-            String checkSql = "SELECT COUNT(*) FROM Gigs WHERE poster_id = ? AND title = ? AND status = 'Open'";
-            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
-                checkStmt.setInt(1, posterId);
-                checkStmt.setString(2, title.trim());
-                ResultSet rs = checkStmt.executeQuery();
-                if (rs.next() && rs.getInt(1) > 0) {
-                    response.sendRedirect("post-gig.jsp?error=An active gig with this title already exists.");
-                    return;
+            if (form.ok()) {
+                try (PreparedStatement s = conn.prepareStatement("SELECT COUNT(*) FROM Gigs WHERE poster_id = ? AND title = ? AND status = 'Open'")) {
+                    s.setInt(1, posterId);
+                    s.setString(2, form.typed.get("title"));
+                    try (ResultSet rs = s.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) form.errors.put("title", "You already have an open gig with this title.");
+                    }
                 }
             }
-
-            String sql = "INSERT INTO Gigs (poster_id, title, description, budget, deadline, completion_deadline, category, when_text, where_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, posterId);
-            stmt.setString(2, title.trim());
-            stmt.setString(3, description.trim());
-            stmt.setBigDecimal(4, new BigDecimal(budgetStr));
-            
-            if (deadlineStr != null && !deadlineStr.trim().isEmpty()) {
-                stmt.setDate(5, Date.valueOf(deadlineStr));
-            } else {
-                stmt.setNull(5, java.sql.Types.DATE);
+            if (!form.ok()) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                request.setAttribute("form", form);
+                request.getRequestDispatcher(VIEW).forward(request, response);
+                return;
             }
-
-            if (completionDeadlineStr != null && !completionDeadlineStr.trim().isEmpty()) {
-                stmt.setDate(6, Date.valueOf(completionDeadlineStr));
-            } else {
-                stmt.setNull(6, java.sql.Types.DATE);
+            try (PreparedStatement s = conn.prepareStatement("INSERT INTO Gigs (poster_id, title, description, budget, deadline, completion_deadline,"
+                    + " category, when_text, where_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                s.setInt(1, posterId);
+                s.setString(2, form.typed.get("title"));
+                s.setString(3, form.typed.get("description"));
+                s.setBigDecimal(4, form.pay);
+                if (form.applyBy != null) s.setDate(5, Date.valueOf(form.applyBy)); else s.setNull(5, Types.DATE);
+                if (form.doneBy != null) s.setDate(6, Date.valueOf(form.doneBy)); else s.setNull(6, Types.DATE);
+                s.setString(7, form.typed.get("category"));
+                s.setString(8, form.typed.get("when"));
+                s.setString(9, form.typed.get("where"));
+                s.executeUpdate();
             }
-
-            stmt.setString(7, category);
-            stmt.setString(8, whenText);
-            stmt.setString(9, whereText);
-
-            stmt.executeUpdate();
-            response.sendRedirect("poster-dashboard.jsp?message=Gig created successfully.");
         } catch (SQLException e) {
-            throw new ServletException("Database error", e);
-        } catch (IllegalArgumentException e) {
-            response.sendRedirect("post-gig.jsp?error=Invalid data format");
+            throw new ServletException("Could not save the gig", e);
         }
+        response.sendRedirect("your-gigs?posted=1");
     }
 }

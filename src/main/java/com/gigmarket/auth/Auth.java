@@ -44,8 +44,8 @@ public final class Auth {
     /** Where each role lands after logging in. Relative to the app root. */
     public static String home(String sessionRole) {
         if ("admin".equals(sessionRole)) return "admin/approvals";
-        if ("poster".equals(sessionRole)) return "poster-dashboard.jsp";
-        return "student-dashboard.jsp";
+        if ("poster".equals(sessionRole)) return "your-gigs";
+        return "dashboard";
     }
 
     /**
@@ -67,7 +67,17 @@ public final class Auth {
         return null;
     }
 
-    /** A per-session token for forms that change data (admin decisions). */
+    /**
+     * For forms that change data: true when the request carries this session's token. Otherwise answers 403 and
+     * returns false; the caller just returns.
+     */
+    public static boolean requireCsrf(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        if (csrfOk(req)) return true;
+        resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+        return false;
+    }
+
+    /** A per-session token for every form that changes data (apply, post, hire, reject, mark done, admin decisions). */
     public static String csrfToken(HttpServletRequest req) {
         HttpSession s = req.getSession(true);
         String t = (String) s.getAttribute(CSRF);

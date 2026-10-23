@@ -1,51 +1,27 @@
 package com.gigmarket.servlet;
 
-import com.gigmarket.model.Application;
 import com.gigmarket.auth.Auth;
-import com.gigmarket.util.DatabaseUtil;
+import com.gigmarket.gigs.Work;
+import java.io.IOException;
+import java.sql.SQLException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
+/** Every gig the student applied for, newest first, with where it stands (/my-applications). Students only. */
 @WebServlet("/my-applications")
 public class TrackApplicationStatusServlet extends HttpServlet {
-    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Students only.
-        Integer applicantId = Auth.require(request, response, "student");
-        if (applicantId == null) return;
-        
-        List<Application> applications = new ArrayList<>();
-        
-        try (Connection conn = DatabaseUtil.getConnection()) {
-            String sql = "SELECT a.*, g.title as gig_title FROM Applications a JOIN Gigs g ON a.gig_id = g.gig_id WHERE a.applicant_id = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, applicantId);
-            ResultSet rs = stmt.executeQuery();
-            
-            while (rs.next()) {
-                Application app = new Application();
-                app.setApplicationId(rs.getInt("application_id"));
-                app.setGigId(rs.getInt("gig_id"));
-                app.setPitchText(rs.getString("gig_title")); // Repurposing field for UI simplicity
-                app.setStatus(rs.getString("status"));
-                applications.add(app);
-            }
+        Integer id = Auth.require(request, response, "student");
+        if (id == null) return;
+        try {
+            request.setAttribute("rows", Work.studentRows(id));
         } catch (SQLException e) {
-            throw new ServletException("Database error", e);
+            throw new ServletException("Could not load your applications", e);
         }
-        
-        request.setAttribute("applications", applications);
-        request.getRequestDispatcher("my-applications.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/my-applications.jsp").forward(request, response);
     }
 }

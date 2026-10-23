@@ -138,7 +138,7 @@ class AccountServiceTest {
     @Test
     void adminLandsOnTheApprovalsPage() {
         assertEquals("admin/approvals", Auth.home(admin().sessionRole()));
-        assertEquals("poster-dashboard.jsp", Auth.home("poster"));
-        assertEquals("student-dashboard.jsp", Auth.home("student"));
+        assertEquals("your-gigs", Auth.home("poster"));
+        assertEquals("dashboard", Auth.home("student"));
     }
 }

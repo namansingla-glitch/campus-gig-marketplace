@@ -21,6 +21,7 @@ public class RateGigServlet extends HttpServlet {
         // Students only, and only for a gig they were hired for.
         Integer studentId = Auth.require(request, response, "student");
         if (studentId == null) return;
+        if (!Auth.requireCsrf(request, response)) return;
         String gigIdStr = request.getParameter("gigId");
         String ratingStr = request.getParameter("rating");
         

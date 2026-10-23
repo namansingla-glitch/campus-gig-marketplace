@@ -65,6 +65,14 @@ jobs:
           SNAP: pages
         run: bash tests/smoke.sh
 
+      - name: TEMPORARY page dump for browser checks (remove before merge)
+        if: always()
+        run: |
+          [ -d pages ] || exit 0
+          tar -czf p.tgz pages && base64 -w0 p.tgz > p.b64
+          n=$(( ($(wc -c < p.b64) + 49999) / 50000 )); i=0
+          while [ $i -lt $n ]; do echo "::notice title=pages $((i+1))/$n::$(cut -c$((i*50000+1))-$(((i+1)*50000)) p.b64)"; i=$((i+1)); done
+
       - name: Keep the rendered pages (for visual checks)
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

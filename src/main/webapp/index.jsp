@@ -3,7 +3,7 @@
     String pageTitle = "campus.gig: free hour? pick a gig";
     String role = (String) session.getAttribute("userRole");
     boolean signedIn = role != null;
-    String home = "poster".equals(role) ? "poster-dashboard.jsp" : "student-dashboard.jsp";
+    String home = com.gigmarket.auth.Auth.home(role);
 %>
 <%@ include file="WEB-INF/jspf/kit-head.jspf" %>
 <link rel="stylesheet" href="<%= ctx %>/css/landing.css">

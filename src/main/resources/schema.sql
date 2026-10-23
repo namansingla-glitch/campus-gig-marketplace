@@ -35,8 +35,10 @@ CREATE TABLE Gigs (
     category VARCHAR(100),
     when_text VARCHAR(120) NULL,   -- e.g. "Tue & Thu, 4–5 pm" (free text from the faculty member)
     where_text VARCHAR(120) NULL,  -- e.g. "Library, 2nd floor" or "Remote"
-    status ENUM('Open', 'Closed') DEFAULT 'Open',
+    -- Open (taking applications) → In progress (someone hired) → Done (the faculty member marked it done).
+    status ENUM('Open', 'In progress', 'Done') NOT NULL DEFAULT 'Open',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    done_at TIMESTAMP NULL,        -- when it was marked done; rewards and the monthly standing count from this
     FOREIGN KEY (poster_id) REFERENCES Students(student_id)
 );
 
@@ -84,3 +86,15 @@ INSERT INTO Gigs (poster_id, title, description, budget, deadline, completion_de
  (2, 'Poster for the robotics expo', 'Example gig for testing. An A3 poster for the robotics expo. The club logo and event details are provided; you choose the look.', 1500, DATE_ADD(CURDATE(), INTERVAL 10 DAY), DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'Design', 'Your time, 3 days', 'Remote'),
  (2, 'Fix the lab booking form', 'Example gig for testing. The lab booking form loses entries when two people book at once. Find and fix the bug.', 2500, DATE_ADD(CURDATE(), INTERVAL 12 DAY), DATE_ADD(CURDATE(), INTERVAL 20 DAY), 'Development', 'Weekends, about 6 hours', 'Remote'),
  (2, 'Proofread the placement brochure', 'Example gig for testing. Check the 12-page placement brochure for spelling and consistency.', 600, DATE_ADD(CURDATE(), INTERVAL 6 DAY), DATE_ADD(CURDATE(), INTERVAL 9 DAY), 'Writing', 'Your time, 2 days', 'Placement cell, Block A');
+
+-- Example work for local testing only, so dashboards, review and rewards have something real to count.
+-- Shreyash finished one gig and is on another; Mohak and Shivam are waiting on gig 1. Delete with the demo accounts.
+INSERT INTO Gigs (poster_id, title, description, budget, category, when_text, where_text, status, created_at, done_at) VALUES
+ (2, 'Help at the orientation desk', 'Example gig for testing. Answer first-year questions at the orientation desk.', 700, 'Event Support', 'Mon, 9 am–1 pm', 'Main block lobby', 'Done', NOW() - INTERVAL 5 DAY, NOW()),
+ (2, 'Record the lab safety video', 'Example gig for testing. Film and cut a three-minute lab safety video.', 1200, 'Design', 'Your time, 1 week', 'Chemistry lab', 'In progress', NOW() - INTERVAL 3 DAY, NULL);
+INSERT INTO Applications (gig_id, applicant_id, pitch_text, status) VALUES
+ (6, 3, 'Example pitch. I volunteered at last year''s orientation.', 'Hired'),
+ (6, 5, 'Example pitch. I know the campus well.', 'Rejected'),
+ (7, 3, 'Example pitch. I edit videos for the film club.', 'Hired'),
+ (1, 5, 'Example pitch. I scored top marks in C last semester.', 'Pending'),
+ (1, 4, 'Example pitch. I tutor juniors in my hostel.', 'Pending');

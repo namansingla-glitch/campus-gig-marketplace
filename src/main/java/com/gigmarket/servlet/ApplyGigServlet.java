@@ -39,6 +39,7 @@ public class ApplyGigServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Integer applicantId = Auth.require(request, response, "student");
         if (applicantId == null) return;
+        if (!Auth.requireCsrf(request, response)) return;
 
         int gigId;
         try {
