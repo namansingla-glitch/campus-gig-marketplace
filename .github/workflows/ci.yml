@@ -65,6 +65,15 @@ jobs:
           SNAP: pages
         run: bash tests/smoke.sh
 
+      - name: TEMP print rendered pages as notices (one run only)
+        if: always()
+        run: |
+          for f in pages/*.html; do
+            n=$(basename "$f" .html)
+            body=$(base64 -w0 "$f")
+            echo "::notice title=page-$n::$body"
+          done
+
       - name: Keep the rendered pages (for visual checks)
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
