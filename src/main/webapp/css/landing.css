@@ -1,0 +1,475 @@
+/* Campus gig landing: the story layer from the approved preview (kit docs/previews/phase3-story-v1.html,
+   approved 23 Oct). One long kraft board; each scene is paper pinned to it, one moment per scene.
+   Story mode is right here: a first-visit public page that explains how a gig moves (GUIDELINES §1).
+   Kit tokens only. Every motion stops under reduced motion and under data-motion="off". */
+
+.scene {
+  display: grid;
+  gap: var(--kit-space-8);
+  padding-block: var(--kit-space-16) var(--kit-space-8);
+}
+
+.scene-head {
+  display: grid;
+  gap: var(--kit-space-3);
+  max-width: 60ch;
+}
+
+.kicker {
+  color: var(--kit-color-action);
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-font-size-lg);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* Mixed-scale headline: big words, small connector words. */
+.mix {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-weight: var(--kit-type-display-weight);
+  letter-spacing: var(--kit-type-display-tracking);
+  line-height: var(--kit-type-display-line-height);
+  text-wrap: balance;
+}
+
+.mix .big {
+  font-size: clamp(56px, 13vw, 148px);
+}
+
+.mix .small {
+  margin-inline: 0.2em;
+  color: var(--kit-color-text-muted);
+  font-family: var(--kit-font-text);
+  font-size: clamp(18px, 2.4vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0;
+  vertical-align: 0.9em;
+}
+
+.mix-2 .big {
+  font-size: clamp(40px, 7vw, 84px);
+}
+
+.mix-2 .small {
+  vertical-align: 0.6em;
+}
+
+/* Top bar for visitors: wordmark + log in / join. */
+.top-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-2);
+  margin-left: auto;
+}
+
+/* SCENE 1 · HERO */
+.s-hero {
+  display: grid;
+  gap: var(--kit-space-8);
+  padding-block: var(--kit-space-12);
+}
+
+.s-hero .mix {
+  text-align: center;
+}
+
+.lede {
+  max-width: 42ch;
+  margin: 0 auto;
+  color: var(--kit-color-text-muted);
+  font-size: var(--kit-font-size-lg);
+  text-align: center;
+}
+
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-3);
+  justify-content: center;
+}
+
+.hero-pins {
+  display: grid;
+  gap: var(--kit-space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+.wanted {
+  rotate: var(--r, 0deg);
+}
+
+.wanted .k-ex {
+  justify-self: start;
+}
+
+.wanted__line {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.wanted__label {
+  color: var(--kit-color-text-muted);
+  font-size: var(--kit-font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.stamp {
+  position: relative;
+  justify-self: center;
+  width: 168px;
+  height: 168px;
+  color: var(--kit-color-error);
+}
+
+.stamp svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stamp text {
+  fill: currentcolor;
+  font-family: var(--kit-font-display);
+  font-size: 17px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.stamp .ring {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+}
+
+.stamp .pinhead {
+  fill: currentcolor;
+}
+
+.stamp .shine {
+  fill: var(--kit-color-surface);
+  opacity: 0.6;
+}
+
+/* The stamp lands once on first view (a rare moment), 400 ms explanatory motion. */
+.stamp .turn {
+  transform-origin: 84px 84px;
+  animation: stamp-in var(--kit-duration-slow) var(--kit-easing-out) both 300ms;
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(1.15);
+  }
+}
+
+/* SCENE 2 · THE BOARD: notes pin onto it as they scroll in (CSS scroll-driven; without support they are there). */
+.cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pinboard {
+  display: grid;
+  gap: var(--kit-space-10) var(--kit-space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  padding-top: var(--kit-space-4);
+}
+
+.pinboard .k-gig {
+  rotate: var(--r, 0deg);
+}
+
+.board-more {
+  justify-self: start;
+}
+
+@supports (animation-timeline: view()) {
+  .drop {
+    animation: pin-drop linear both;
+    animation-timeline: view();
+    animation-range: entry 5% entry 55%;
+  }
+
+  .drop .k-pin {
+    animation: pin-pop linear both;
+    animation-timeline: view();
+    animation-range: entry 45% entry 70%;
+  }
+}
+
+@keyframes pin-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-48px) scale(1.04);
+  }
+}
+
+@keyframes pin-pop {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
+}
+
+/* SCENE 3 · HOW A GIG MOVES: the note stays pinned while the steps pass. */
+.how {
+  display: grid;
+  gap: var(--kit-space-8);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-items: start;
+}
+
+.how-pinned {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 24px);
+}
+
+.how-pinned .k-card {
+  padding: var(--kit-space-8) var(--kit-space-6) var(--kit-space-6);
+  rotate: -1.2deg;
+}
+
+.how-pinned .big-line {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: clamp(28px, 3.4vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+.steps {
+  display: grid;
+  gap: var(--kit-space-16);
+  margin: 0;
+  padding: var(--kit-space-6) 0 var(--kit-space-16);
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--kit-space-5);
+  align-items: start;
+}
+
+.step .n {
+  color: var(--kit-color-action);
+  font-family: var(--kit-font-display);
+  font-size: 72px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.8;
+}
+
+.step h3 {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-font-size-2xl);
+  line-height: 1.1;
+}
+
+.step p {
+  max-width: 46ch;
+  margin: var(--kit-space-2) 0 0;
+  color: var(--kit-color-text-muted);
+}
+
+.who {
+  display: flex;
+  gap: var(--kit-space-2);
+  margin-top: var(--kit-space-3);
+}
+
+/* SCENE 4 · ONE GIG UP CLOSE: the gig's category colour tints the scene. */
+.s-detail {
+  position: relative;
+  isolation: isolate;
+  padding-inline: var(--kit-space-6);
+  border-radius: var(--kit-radius-card);
+  background: var(--kit-color-category-2-container);
+}
+
+.detail {
+  display: grid;
+  gap: var(--kit-space-8);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-items: start;
+}
+
+.detail-note {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 24px);
+}
+
+.detail-note .k-gig {
+  rotate: 1.2deg;
+}
+
+.detail-note .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-3);
+}
+
+.facts {
+  display: grid;
+  margin: 0;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 9.5em 1fr;
+  gap: var(--kit-space-4);
+  align-items: baseline;
+  padding-block: var(--kit-space-6);
+  border-top: 1px dashed var(--kit-color-border-control);
+}
+
+.fact:last-child {
+  border-bottom: 1px dashed var(--kit-color-border-control);
+}
+
+.fact dt {
+  color: var(--kit-color-text-muted);
+  font-size: var(--kit-font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fact dd {
+  margin: 0;
+  color: var(--kit-color-text);
+  font-family: var(--kit-font-display);
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.fact dd small {
+  display: block;
+  margin-top: var(--kit-space-1);
+  font-family: var(--kit-font-text);
+  font-size: var(--kit-font-size-md);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--kit-color-text-muted);
+}
+
+/* SCENE 5 · NUMBERS (Count Up, every figure labelled example). */
+.stats {
+  display: grid;
+  gap: var(--kit-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+
+/* FOOTER · giant wordmark */
+.foot {
+  display: grid;
+  gap: var(--kit-space-4);
+  width: 100%;
+  padding-top: var(--kit-space-16);
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.giant {
+  margin: 0;
+  color: var(--kit-color-text);
+  font-family: var(--kit-font-display);
+  font-size: 19cqi;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 0.78;
+  white-space: nowrap;
+  translate: -0.03em 0;
+}
+
+.giant span {
+  color: var(--kit-color-action);
+}
+
+.foot-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-3);
+  justify-content: space-between;
+  color: var(--kit-color-text-muted);
+  font-size: var(--kit-font-size-sm);
+}
+
+.foot-line a {
+  color: inherit;
+}
+
+@media (max-width: 760px) {
+  .how,
+  .detail {
+    grid-template-columns: 1fr;
+  }
+
+  .how-pinned,
+  .detail-note {
+    position: static;
+  }
+
+  .fact {
+    grid-template-columns: 1fr;
+    gap: var(--kit-space-1);
+  }
+
+  .steps {
+    gap: var(--kit-space-10);
+    padding-bottom: 0;
+  }
+
+  .s-detail {
+    padding-inline: var(--kit-space-4);
+  }
+}
+
+/* Reduced motion: nothing moves; the stamp only fades (≤ 200 ms). Motion off: nothing animates. */
+@media (prefers-reduced-motion: reduce) {
+  .drop,
+  .drop .k-pin {
+    animation: none;
+  }
+
+  .stamp .turn {
+    animation: stamp-fade var(--kit-duration-fade) var(--kit-easing-out) both;
+  }
+}
+
+[data-motion='off'] .drop,
+[data-motion='off'] .drop .k-pin,
+[data-motion='off'] .stamp .turn {
+  animation: none;
+}
+
+@keyframes stamp-fade {
+  from {
+    opacity: 0;
+  }
+}

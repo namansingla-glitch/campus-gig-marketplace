@@ -1,0 +1,100 @@
+/* Campus gig: log in and join. A form is a repeat-use screen, so no story layer and no expressive effect
+   (GUIDELINES §1, §4): one paper note pinned to the board. Kit tokens only. */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--kit-space-8);
+  justify-items: center;
+  min-height: 100dvh;
+  align-content: start;
+}
+
+.auth > * {
+  box-sizing: border-box;
+}
+
+.auth .k-top {
+  justify-self: stretch;
+}
+
+.auth-note {
+  display: grid;
+  gap: var(--kit-space-6);
+  width: 100%;
+  max-width: 440px;
+  padding: var(--kit-space-10) var(--kit-space-6) var(--kit-space-8);
+}
+
+.auth-note h1 {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-font-size-3xl);
+  font-weight: var(--kit-type-display-weight);
+  letter-spacing: var(--kit-type-display-tracking);
+  line-height: 1.05;
+}
+
+.auth-note .sub {
+  margin: calc(-1 * var(--kit-space-4)) 0 0;
+  color: var(--kit-color-text-muted);
+}
+
+.auth-form {
+  display: grid;
+  gap: var(--kit-space-5);
+}
+
+.auth-form .k-btn {
+  width: 100%;
+}
+
+.choice {
+  display: grid;
+  gap: var(--kit-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choice legend {
+  margin-bottom: var(--kit-space-2);
+  padding: 0;
+}
+
+.choice__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-2);
+}
+
+.switch {
+  margin: 0;
+  color: var(--kit-color-text-muted);
+  text-align: center;
+}
+
+.switch a {
+  color: var(--kit-color-action);
+  font-weight: 600;
+}
+
+/* Demo accounts: shown only while the app is a demo, and labelled as such. */
+.demo {
+  display: grid;
+  gap: var(--kit-space-2);
+  width: 100%;
+  max-width: 440px;
+  padding: var(--kit-space-4) var(--kit-space-5);
+  border: 1px dashed var(--kit-color-border-control);
+  border-radius: var(--kit-radius-card);
+  font-size: var(--kit-font-size-sm);
+}
+
+.demo p {
+  margin: 0;
+}
+
+.demo code {
+  font-family: var(--kit-font-mono);
+}

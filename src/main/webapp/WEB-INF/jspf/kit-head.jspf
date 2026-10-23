@@ -1,0 +1,15 @@
+<%-- Shared <head> for pages built with Naman's kit (Campus Board skin). Static include: set
+     String pageTitle before including. Pages that still use header.jsp (Tailwind) are unchanged.
+     The kit files in /kit are copied by `pnpm kit:export` from a tagged kit build; see kit/KIT_VERSION. --%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title><%= pageTitle %></title>
+<link rel="preload" href="kit/fonts/bricolage-grotesque-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="kit/fonts/instrument-sans-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="kit/kit.css">
+<link rel="stylesheet" href="kit/kit-components.css">
+<link rel="stylesheet" href="css/site.css">
+<script type="module" src="kit/effects/auto.js"></script>

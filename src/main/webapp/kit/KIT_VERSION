@@ -1,0 +1,21 @@
+version: v1-lite.0
+skin: campus-board
+exported: 2026-10-23T12:20:18.507Z
+files:
+  effects/auto.js
+  effects/count-up.js
+  effects/hover-plate.js
+  effects/index.js
+  effects/motion.js
+  effects/rise.js
+  fonts/LICENSE-bricolage-grotesque.txt
+  fonts/LICENSE-instrument-sans.txt
+  fonts/LICENSE-jetbrains-mono.txt
+  fonts/bricolage-grotesque-latin-ext-standard-normal.woff2
+  fonts/bricolage-grotesque-latin-standard-normal.woff2
+  fonts/instrument-sans-latin-ext-standard-normal.woff2
+  fonts/instrument-sans-latin-standard-normal.woff2
+  fonts/jetbrains-mono-latin-ext-wght-normal.woff2
+  fonts/jetbrains-mono-latin-wght-normal.woff2
+  kit-components.css
+  kit.css
