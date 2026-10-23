@@ -6,6 +6,9 @@ set -uo pipefail
 BASE="${BASE:-http://localhost:8080/gig-marketplace}"
 MYSQL="${MYSQL:-mysql -h127.0.0.1 -uroot -proot gig_marketplace}"
 JAR="$(mktemp -d)"
+SNAP="${SNAP:-}"   # folder to save page HTML for visual checks (optional)
+[ -n "$SNAP" ] && mkdir -p "$SNAP"
+snap() { [ -n "$SNAP" ] && printf '%s' "$BODY" > "$SNAP/$1.html"; return 0; }
 FAILS=0
 PASSES=0
 
@@ -25,16 +28,16 @@ expect_body()   { [[ "$BODY" == *"$2"* ]] && ok "$1 contains '$2'" || bad "$1: p
 expect_no_body(){ [[ "$BODY" != *"$2"* ]] && ok "$1 does not contain '$2'" || bad "$1: page contains '$2'"; }
 
 echo "Pages"
-req anon GET /;                          expect_status "landing" 200; expect_body "landing" "pick a gig."
-req anon GET /login.jsp;                 expect_status "log in page" 200; expect_no_body "log in page" 'name="role"'
+req anon GET /;                          snap landing; expect_status "landing" 200; expect_body "landing" "pick a gig."
+req anon GET /login.jsp;                 snap login; expect_status "log in page" 200; expect_no_body "log in page" 'name="role"'
 req anon GET "/login.jsp?error=%3Cscript%3Ealert(1)%3C/script%3E"; expect_no_body "log in page with a crafted error" "<script>alert"
-req anon GET /register;                  expect_status "join page" 200; expect_body "join page" "Woxsen University"; expect_no_body "join page" 'name="role"'
+req anon GET /register;                  snap register; expect_status "join page" 200; expect_body "join page" "Woxsen University"; expect_no_body "join page" 'name="role"'
 req anon GET /kit/kit.css;               expect_status "kit css" 200
 req anon GET /WEB-INF/views/register.jsp; [ "$STATUS" = 404 ] || [ "$STATUS" = 403 ] && ok "views are not public → $STATUS" || bad "WEB-INF view served: $STATUS"
 
 echo "Join"
 req anon POST /register --data-urlencode university=1 --data-urlencode name=Riya --data-urlencode email=riya@gmail.com --data-urlencode password=secret1
-expect_status "join with gmail" 400; expect_body "join with gmail" "Use your Woxsen email"
+snap register-error; expect_status "join with gmail" 400; expect_body "join with gmail" "Use your Woxsen email"
 req anon POST /register --data-urlencode university=1 --data-urlencode name=Riya --data-urlencode email=riya@woxsen.edu.in --data-urlencode password=12345
 expect_status "join with a 5-character password" 400; expect_body "short password" "at least 6"
 req riya POST /register --data-urlencode university=1 --data-urlencode "name=Riya Sharma" --data-urlencode email=Riya@Woxsen.edu.in --data-urlencode password=secret1 --data-urlencode role=poster
@@ -43,12 +46,13 @@ req riya GET /student-dashboard.jsp;     expect_status "student dashboard after 
 req anon POST /register --data-urlencode university=1 --data-urlencode name=Again --data-urlencode email=riya@woxsen.edu.in --data-urlencode password=secret1
 expect_status "same email twice" 400; expect_body "same email twice" "already has an account"
 req anon POST /register --data-urlencode university=1 --data-urlencode "name=Prof Test" --data-urlencode email=p.test@faculty.woxsen.com --data-urlencode password=secret1
-expect_status "faculty joins" 200; expect_body "faculty joins" "waiting for approval"
+snap register-pending; expect_status "faculty joins" 200; expect_body "faculty joins" "waiting for approval"
 
 echo "Log in"
 req x POST /login --data-urlencode email=naman@woxsen.edu.in --data-urlencode password=wrong12; expect_loc "wrong password" "error=invalid"
 req x POST /login --data-urlencode email=nobody@woxsen.edu.in --data-urlencode password=password123; expect_loc "unknown email" "error=invalid"
 req x POST /login --data-urlencode email=a.rao@faculty.woxsen.com --data-urlencode password=password123; expect_loc "pending faculty" "error=pending"
+req anon GET "/login.jsp?error=pending"; snap login-pending
 req naman POST /login --data-urlencode email=NAMAN@woxsen.edu.in --data-urlencode password=password123 --data-urlencode role=poster
 expect_loc "student logs in (role in the form ignored)" "student-dashboard.jsp"
 
@@ -73,7 +77,7 @@ req riddhi GET "/review-applications?gigId=$MINE"; expect_status "faculty opens 
 echo "Admin approval"
 $MYSQL -e "UPDATE Students SET role='admin', status='active' WHERE email='shivam@woxsen.edu.in';" 2>/dev/null
 req admin POST /login --data-urlencode email=shivam@woxsen.edu.in --data-urlencode password=password123; expect_loc "admin logs in" "admin/approvals"
-req admin GET /admin/approvals; expect_status "approvals page" 200; expect_body "approvals page" "a.rao@faculty.woxsen.com"; expect_body "approvals page" "p.test@faculty.woxsen.com"
+req admin GET /admin/approvals; snap admin; expect_status "approvals page" 200; expect_body "approvals page" "a.rao@faculty.woxsen.com"; expect_body "approvals page" "p.test@faculty.woxsen.com"
 CSRF="$(printf '%s' "$BODY" | grep -o 'name="csrf" value="[^"]*"' | head -1 | sed 's/.*value="//; s/"$//')"
 RAO=$($MYSQL -N -e "SELECT student_id FROM Students WHERE email='a.rao@faculty.woxsen.com';" 2>/dev/null)
 req admin POST /admin/approvals --data-urlencode action=approve --data-urlencode "accountId=$RAO"; expect_status "approve without the form token" 403
@@ -83,7 +87,7 @@ req rao POST /login --data-urlencode email=a.rao@faculty.woxsen.com --data-urlen
 TEST=$($MYSQL -N -e "SELECT student_id FROM Students WHERE email='p.test@faculty.woxsen.com';" 2>/dev/null)
 req admin POST /admin/approvals --data-urlencode action=reject --data-urlencode "accountId=$TEST" --data-urlencode "csrf=$CSRF"; expect_loc "reject" "done=rejected"
 req x POST /login --data-urlencode email=p.test@faculty.woxsen.com --data-urlencode password=secret1; expect_loc "rejected faculty" "error=rejected"
-req admin GET /admin/approvals; expect_body "approvals after deciding" "Nobody waiting"
+req admin GET /admin/approvals; snap admin-empty; expect_body "approvals after deciding" "Nobody waiting"
 
 echo "Passwords are stored as hashes"
 PLAIN=$($MYSQL -N -e "SELECT COUNT(*) FROM Students WHERE password_hash NOT LIKE 'pbkdf2_sha256\$%';" 2>/dev/null)
