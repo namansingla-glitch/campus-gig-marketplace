@@ -6,7 +6,7 @@
     String home = "poster".equals(role) ? "poster-dashboard.jsp" : "student-dashboard.jsp";
 %>
 <%@ include file="WEB-INF/jspf/kit-head.jspf" %>
-<link rel="stylesheet" href="css/landing.css">
+<link rel="stylesheet" href="<%= ctx %>/css/landing.css">
 </head>
 <body class="k-board" data-skin="campus-board" data-theme="auto">
 <div class="page" data-kit-plate>
@@ -22,7 +22,7 @@
       <a class="k-btn" href="<%= home %>">Your dashboard</a>
 <% } else { %>
       <a class="k-btn k-btn--ghost" href="login.jsp">Log in</a>
-      <a class="k-btn" href="register.jsp">Join</a>
+      <a class="k-btn" href="register">Join</a>
 <% } %>
     </div>
   </header>
@@ -169,7 +169,7 @@
   </main>
 
   <footer class="foot">
-    <div class="foot-line"><span>Faculty post. Students pick.</span><span><% if (signedIn) { %><a href="logout">Log out</a><% } else { %><a href="login.jsp">Log in</a> · <a href="register.jsp">Join</a><% } %></span></div>
+    <div class="foot-line"><span>Faculty post. Students pick.</span><span><% if (signedIn) { %><a href="logout">Log out</a><% } else { %><a href="login.jsp">Log in</a> · <a href="register">Join</a><% } %></span></div>
     <p class="giant">campus<span>.</span>gig</p>
   </footer>
 </div>

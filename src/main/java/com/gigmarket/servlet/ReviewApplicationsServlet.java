@@ -1,6 +1,8 @@
 package com.gigmarket.servlet;
 
 import com.gigmarket.model.Application;
+import com.gigmarket.auth.Auth;
+import com.gigmarket.auth.GigAccess;
 import com.gigmarket.util.DatabaseUtil;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -20,12 +22,23 @@ public class ReviewApplicationsServlet extends HttpServlet {
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Faculty only, and only for their own gig.
+        Integer facultyId = Auth.require(request, response, "poster");
+        if (facultyId == null) return;
         String gigIdStr = request.getParameter("gigId");
         List<Application> applications = new ArrayList<>();
         
         if (gigIdStr == null || gigIdStr.isEmpty()) {
             response.sendRedirect("index.jsp");
             return;
+        }
+        try {
+            if (!GigAccess.postedBy(Integer.parseInt(gigIdStr), facultyId)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+        } catch (SQLException | NumberFormatException e) {
+            throw new ServletException("Database error", e);
         }
 
         try (Connection conn = DatabaseUtil.getConnection()) {
@@ -56,9 +69,21 @@ public class ReviewApplicationsServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        Integer facultyId = Auth.require(request, response, "poster");
+        if (facultyId == null) return;
         String action = request.getParameter("action");
         String applicationIdStr = request.getParameter("applicationId");
         String gigIdStr = request.getParameter("gigId");
+        try {
+            int gigId = Integer.parseInt(gigIdStr);
+            if (!GigAccess.postedBy(gigId, facultyId)
+                    || (applicationIdStr != null && !GigAccess.applicationOnGig(Integer.parseInt(applicationIdStr), gigId))) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+        } catch (SQLException | NumberFormatException e) {
+            throw new ServletException("Database error", e);
+        }
         
         if ("hire".equals(action)) {
             try (Connection conn = DatabaseUtil.getConnection()) {

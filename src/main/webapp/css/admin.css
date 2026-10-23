@@ -1,0 +1,78 @@
+/* Campus gig admin: faculty approvals. A tool, scanned and acted on: no story layer, no expressive effect.
+   Kit tokens only. */
+
+.adm {
+  gap: var(--kit-space-6);
+}
+
+.adm > * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.adm-top {
+  display: flex;
+  gap: var(--kit-space-2);
+  margin-left: auto;
+}
+
+.adm-main {
+  display: grid;
+  gap: var(--kit-space-6);
+}
+
+.adm-head {
+  display: grid;
+  gap: var(--kit-space-2);
+}
+
+.adm-head h1 {
+  margin: 0;
+  font-family: var(--kit-font-display);
+  font-size: var(--kit-font-size-3xl);
+  font-weight: var(--kit-type-display-weight);
+  letter-spacing: var(--kit-type-display-tracking);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.adm-head .sub {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--kit-color-text-muted);
+}
+
+.adm-list {
+  display: grid;
+  gap: var(--kit-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.adm-who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.adm-meta {
+  color: var(--kit-color-text-muted);
+  font-size: var(--kit-font-size-sm);
+}
+
+.adm-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kit-space-2);
+  margin: 0;
+}

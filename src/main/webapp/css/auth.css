@@ -98,3 +98,11 @@
 .demo code {
   font-family: var(--kit-font-mono);
 }
+
+.auth-back {
+  justify-self: start;
+}
+
+.auth-note h1 {
+  text-wrap: balance;
+}

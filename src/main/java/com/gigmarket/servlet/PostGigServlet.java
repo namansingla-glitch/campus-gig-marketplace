@@ -1,5 +1,6 @@
 package com.gigmarket.servlet;
 
+import com.gigmarket.auth.Auth;
 import com.gigmarket.util.DatabaseUtil;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -19,12 +20,9 @@ import java.sql.SQLException;
 public class PostGigServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        Integer posterId = (Integer) session.getAttribute("userId");
-        if (posterId == null) {
-            response.sendRedirect("login.jsp?error=Please login first");
-            return;
-        }
+        // Faculty only (role from the database at log in, never from a form).
+        Integer posterId = Auth.require(request, response, "poster");
+        if (posterId == null) return;
 
         String title = request.getParameter("title");
         String description = request.getParameter("description");

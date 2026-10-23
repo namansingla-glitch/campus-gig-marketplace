@@ -1,5 +1,6 @@
 package com.gigmarket.servlet;
 
+import com.gigmarket.auth.Auth;
 import com.gigmarket.util.DatabaseUtil;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -21,12 +22,9 @@ public class ApplyGigServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        javax.servlet.http.HttpSession session = request.getSession();
-        Integer applicantId = (Integer) session.getAttribute("userId");
-        if (applicantId == null) {
-            response.sendRedirect("login.jsp?error=Please login first");
-            return;
-        }
+        // Students only.
+        Integer applicantId = Auth.require(request, response, "student");
+        if (applicantId == null) return;
         
         String gigIdStr = request.getParameter("gigId");
         String pitchText = request.getParameter("pitchText");

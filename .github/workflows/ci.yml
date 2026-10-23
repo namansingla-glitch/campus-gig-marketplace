@@ -1,0 +1,73 @@
+# Campus gig CI: build + unit tests, then the real app (Tomcat + MySQL) driven over HTTP by tests/smoke.sh.
+# Runs on every push and pull request. Read-only token.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke:
+    name: Build, unit tests, smoke test in Tomcat
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_URL: jdbc:mysql://127.0.0.1:3306/gig_marketplace
+      DB_USER: root
+      DB_PASSWORD: root
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Tools on the runner
+        run: java -version && mvn -v
+
+      - name: Load the database (schema + demo accounts)
+        run: mysql -h127.0.0.1 -uroot -proot < src/main/resources/schema.sql
+
+      - name: Build and unit tests
+        run: mvn -B -ntp verify 2>&1 | tee mvn-verify.log; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Start Tomcat with the app
+        run: |
+          nohup mvn -B -ntp cargo:run > tomcat.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl -fsS -o /dev/null http://localhost:8080/gig-marketplace/login.jsp; then echo "up after ${i}x2 s"; exit 0; fi
+            sleep 2
+          done
+          echo "::error::Tomcat did not start"; tail -80 tomcat.log; exit 1
+
+      - name: Smoke test (join, log in, approvals, access rules)
+        env:
+          BASE: http://localhost:8080/gig-marketplace
+          MYSQL: mysql -h127.0.0.1 -uroot -proot gig_marketplace
+        run: bash tests/smoke.sh
+
+      - name: Name what failed (annotations; logs are not always readable)
+        if: failure()
+        run: |
+          for f in target/surefire-reports/*.txt; do
+            [ -f "$f" ] && grep -E "FAILURE|ERROR" "$f" | head -5 | sed 's/^/::error::unit: /'
+          done
+          grep -h -A2 -E "<<< (FAILURE|ERROR)" target/surefire-reports/*.txt 2>/dev/null | head -20 | sed 's/^/::error::unit: /' || true
+          grep -E "\[ERROR\]" -m 8 mvn-verify.log 2>/dev/null | sed 's/^/::error::maven: /' || true
+          grep -E "SEVERE|Exception|JasperException|ERROR" -m 8 tomcat.log 2>/dev/null | cut -c1-300 | sed 's/^/::error::tomcat: /' || true
+          tail -150 tomcat.log 2>/dev/null || true
