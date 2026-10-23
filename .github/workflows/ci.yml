@@ -65,48 +65,6 @@ jobs:
           SNAP: pages
         run: bash tests/smoke.sh
 
-      - name: TEMPORARY page dump for browser checks (remove before merge)
-        if: always()
-        run: |
-          [ -d pages ] || exit 0
-          tar -cJf p.txz pages && base64 -w0 p.txz > p.b64
-          echo "::notice title=pages size::$(wc -c < p.b64) chars in $(( ($(wc -c < p.b64) + 3999) / 4000 )) chunks"
-
-      - name: TEMPORARY page dump part 1
-        if: always()
-        run: |
-          [ -f p.b64 ] || exit 0
-          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
-          for i in $(seq 0 8); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
-
-      - name: TEMPORARY page dump part 2
-        if: always()
-        run: |
-          [ -f p.b64 ] || exit 0
-          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
-          for i in $(seq 9 17); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
-
-      - name: TEMPORARY page dump part 3
-        if: always()
-        run: |
-          [ -f p.b64 ] || exit 0
-          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
-          for i in $(seq 18 26); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
-
-      - name: TEMPORARY page dump part 4
-        if: always()
-        run: |
-          [ -f p.b64 ] || exit 0
-          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
-          for i in $(seq 27 35); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
-
-      - name: TEMPORARY page dump part 5
-        if: always()
-        run: |
-          [ -f p.b64 ] || exit 0
-          n=$(( ($(wc -c < p.b64) + 3999) / 4000 ))
-          for i in $(seq 36 44); do [ $i -lt $n ] && echo "::notice title=pages $i::$(cut -c$((i*4000+1))-$(((i+1)*4000)) p.b64)"; done; true
-
       - name: Keep the rendered pages (for visual checks)
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
