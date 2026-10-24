@@ -1,64 +1,53 @@
 package com.gigmarket.servlet;
 
-import com.gigmarket.model.Gig;
-import com.gigmarket.util.DatabaseUtil;
+import com.gigmarket.gigs.Categories;
+import com.gigmarket.gigs.GigStore;
+import com.gigmarket.gigs.Pay;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
+/**
+ * The feed: open gigs, newest first. Public (visitors can browse). Filters come from a plain GET form:
+ * any number of "category" values and an optional "minPay". A pay value that is not a number shows a
+ * message on that field instead of a server error, and the list is shown without that filter.
+ */
 @WebServlet("/browse-gigs")
 public class BrowseGigsServlet extends HttpServlet {
+    static final String VIEW = "/WEB-INF/views/feed.jsp";
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String categoryFilter = request.getParameter("category");
-        String minBudgetStr = request.getParameter("minBudget");
-
-        List<Gig> gigs = new ArrayList<>();
-
-        StringBuilder sql = new StringBuilder("SELECT * FROM Gigs WHERE status = 'Open'");
-        if (categoryFilter != null && !categoryFilter.trim().isEmpty()) {
-            sql.append(" AND category = ?");
+        List<String> chosen = new ArrayList<>();
+        String[] cats = request.getParameterValues("category");
+        if (cats != null) {
+            for (String c : cats) {
+                if (Categories.known(c) && !chosen.contains(c)) chosen.add(c);
+            }
         }
-        if (minBudgetStr != null && !minBudgetStr.trim().isEmpty()) {
-            sql.append(" AND budget >= ?");
+        String minPayTyped = request.getParameter("minPay");
+        BigDecimal minPay = null;
+        String minPayError = null;
+        try {
+            minPay = Pay.parse(minPayTyped);
+        } catch (IllegalArgumentException e) {
+            minPayError = e.getMessage();
         }
-
-        try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            
-            int paramIndex = 1;
-            if (categoryFilter != null && !categoryFilter.trim().isEmpty()) {
-                stmt.setString(paramIndex++, categoryFilter);
-            }
-            if (minBudgetStr != null && !minBudgetStr.trim().isEmpty()) {
-                stmt.setBigDecimal(paramIndex++, new java.math.BigDecimal(minBudgetStr));
-            }
-
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Gig gig = new Gig();
-                gig.setGigId(rs.getInt("gig_id"));
-                gig.setTitle(rs.getString("title"));
-                gig.setDescription(rs.getString("description"));
-                gig.setBudget(rs.getBigDecimal("budget"));
-                gig.setDeadline(rs.getDate("deadline"));
-                gig.setCategory(rs.getString("category"));
-                gigs.add(gig);
-            }
+        try {
+            request.setAttribute("gigs", GigStore.open(chosen, minPay));
         } catch (SQLException e) {
-            throw new ServletException("Database error", e);
+            throw new ServletException("Could not load gigs", e);
         }
-
-        request.setAttribute("gigs", gigs);
-        request.getRequestDispatcher("browse-gigs.jsp").forward(request, response);
+        request.setAttribute("chosen", chosen);
+        request.setAttribute("minPayTyped", minPayTyped == null ? "" : minPayTyped);
+        request.setAttribute("minPayError", minPayError);
+        request.getRequestDispatcher(VIEW).forward(request, response);
     }
 }

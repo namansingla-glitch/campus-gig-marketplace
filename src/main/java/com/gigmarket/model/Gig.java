@@ -14,6 +14,9 @@ public class Gig {
     private String category;
     private String status;
     private java.sql.Timestamp createdAt;
+    private String whenText;
+    private String whereText;
+    private String posterName;
     
     // Default constructor
     public Gig() {}
@@ -48,4 +51,10 @@ public class Gig {
 
     public java.sql.Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(java.sql.Timestamp createdAt) { this.createdAt = createdAt; }
+    public String getWhenText() { return whenText; }
+    public void setWhenText(String whenText) { this.whenText = whenText; }
+    public String getWhereText() { return whereText; }
+    public void setWhereText(String whereText) { this.whereText = whereText; }
+    public String getPosterName() { return posterName; }
+    public void setPosterName(String posterName) { this.posterName = posterName; }
 }

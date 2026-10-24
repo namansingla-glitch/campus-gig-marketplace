@@ -1,0 +1,152 @@
+# Campus gig CI: build + unit tests, then the real app (Tomcat + MySQL) driven over HTTP by tests/smoke.sh.
+# Runs on every push and pull request. Read-only token.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke:
+    name: Build, unit tests, smoke test in Tomcat
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_URL: jdbc:mysql://127.0.0.1:3306/gig_marketplace
+      DB_USER: root
+      DB_PASSWORD: root
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Tools on the runner
+        run: java -version && mvn -v
+
+      - name: Load the database (schema + demo accounts)
+        run: mysql -h127.0.0.1 -uroot -proot < src/main/resources/schema.sql
+
+      - name: Build and unit tests
+        run: |
+          mvn -B -ntp verify 2>&1 | tee mvn-verify.log; code=${PIPESTATUS[0]}
+          grep -E "^\[(INFO|WARNING|ERROR)\] Tests run: [0-9]+, Failures" mvn-verify.log | tail -1 | sed 's/^\[[A-Z]*\] /::notice::unit tests: /'
+          exit $code
+        shell: bash
+
+      - name: Start Tomcat with the app
+        id: tomcat
+        run: |
+          nohup mvn -B -ntp cargo:run > tomcat.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl -fsS -o /dev/null http://localhost:8080/gig-marketplace/login.jsp; then echo "up after ${i}x2 s"; exit 0; fi
+            sleep 2
+          done
+          echo "::error::Tomcat did not start"; tail -80 tomcat.log; exit 1
+
+      # Browser checks run before the smoke test: they only read pages and log in, on the fresh example data.
+      - name: Browser test tools
+        working-directory: tests/e2e
+        run: npm ci --no-audit --no-fund
+
+      - name: Stop the runner's own apt updates and wait for the dpkg lock
+        # The runner's startup apt job holds the dpkg lock, sometimes for over 4 minutes; Playwright's --with-deps
+        # then fails at once ("Unable to acquire the dpkg frontend lock"; kit and campus gig, 24 Oct).
+        run: |
+          sudo systemctl stop unattended-upgrades.service apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+          echo 'DPkg::Lock::Timeout "240";' | sudo tee /etc/apt/apt.conf.d/99-wait-for-lock
+          for i in $(seq 1 120); do
+            sudo fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock >/dev/null 2>&1 || { echo "dpkg lock free after ${i}x5 s"; exit 0; }
+            sleep 5
+          done
+          echo "::warning::dpkg lock still held after 10 minutes"; ps aux | grep -E 'apt|dpkg' | grep -v grep | head -5
+
+      - name: Install Playwright browsers (Chromium + WebKit)
+        working-directory: tests/e2e
+        run: |
+          for i in 1 2 3; do
+            timeout 300 npx playwright install --with-deps chromium webkit > pw-install.log 2>&1 && exit 0
+            grep -iE 'error|failed|E: ' pw-install.log | tail -4 | cut -c1-300 | sed 's/^/::error::playwright install: /'
+            echo "::warning::Playwright browser install try $i failed or took over 5 minutes; retrying"
+            sleep 10
+          done
+          echo "::error::Playwright browsers could not be installed after 3 tries"; exit 1
+
+      - name: Browser checks (every page, Chromium + WebKit, desktop + phone, light + dark, scripts off)
+        id: browser
+        working-directory: tests/e2e
+        env:
+          BASE: http://localhost:8080/gig-marketplace
+          CI: "true"
+        run: npx playwright test
+
+      - name: Browser checks summary (names each failure; every browser and size must have run)
+        if: always()
+        working-directory: tests/e2e
+        run: |
+          [ -f results.json ] || { echo "::error::no browser results"; exit 1; }
+          node -e '
+            const r = require("./results.json"); const per = {}; const fails = [];
+            const walk = (s) => { for (const c of s.suites ?? []) walk(c); for (const sp of s.specs ?? []) for (const t of sp.tests) {
+              const p = t.projectName; per[p] ??= { ok: 0, run: 0 };
+              const st = t.results.at(-1)?.status; if (st === "skipped") continue; per[p].run++;
+              if (st === "passed") per[p].ok++; else { const m = (t.results.at(-1)?.error?.message ?? st).replace(/\x1b\[[0-9;]*m/g, "").split("\n"); const got = m.filter((l) => /^\+\s+"/.test(l)).map((l) => l.replace(/^\+\s+/, "")); fails.push(`${p} › ${sp.title}: ${(got.length ? m[0] + " → " + got.join(" ; ") : m.slice(0, 6).join(" | ")).slice(0, 700)}`); }
+            } };
+            walk(r);
+            const want = ["chromium-desktop", "chromium-phone", "webkit-desktop", "webkit-phone"];
+            console.log("::notice::browser checks: " + want.map((p) => `${p} ${per[p]?.ok ?? 0}/${per[p]?.run ?? 0}`).join(" · "));
+            for (const f of fails.slice(0, 9)) console.log("::error::" + f);
+            if (fails.length || want.some((p) => !per[p]?.run)) process.exit(1);
+          '
+
+      - name: Lighthouse (main pages, phone settings; scores as notices, limits once measured)
+        id: lighthouse
+        if: always() && steps.tomcat.outcome == 'success'
+        working-directory: tests/e2e
+        env:
+          BASE: http://localhost:8080/gig-marketplace
+        run: node lighthouse.mjs
+
+      - name: Smoke test (join, log in, approvals, access rules)
+        # Runs whenever Tomcat started, even when a browser step or Lighthouse failed, so one red step does not hide the others.
+        if: always() && steps.tomcat.outcome == 'success'
+        env:
+          BASE: http://localhost:8080/gig-marketplace
+          MYSQL: mysql -h127.0.0.1 -uroot -proot gig_marketplace
+          SNAP: pages
+        run: bash tests/smoke.sh
+
+      - name: Keep the rendered pages (for visual checks)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pages
+          path: pages/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Name what failed (annotations; logs are not always readable)
+        if: failure()
+        run: |
+          for f in target/surefire-reports/*.txt; do
+            [ -f "$f" ] && grep -E "FAILURE|ERROR" "$f" | head -5 | sed 's/^/::error::unit: /'
+          done
+          grep -h -A2 -E "<<< (FAILURE|ERROR)" target/surefire-reports/*.txt 2>/dev/null | head -20 | sed 's/^/::error::unit: /' || true
+          grep -E "\[ERROR\]" -m 8 mvn-verify.log 2>/dev/null | sed 's/^/::error::maven: /' || true
+          grep -E "SEVERE|Exception|JasperException|ERROR" -m 8 tomcat.log 2>/dev/null | cut -c1-300 | sed 's/^/::error::tomcat: /' || true
+          tail -150 tomcat.log 2>/dev/null || true

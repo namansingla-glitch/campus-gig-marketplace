@@ -1,0 +1,16 @@
+<%-- Shared <head> for pages built with Naman's kit (Campus Board skin). Static include: set
+     String pageTitle before including (plain text: it is escaped here). Paths start at the app root (ctx), so pages under /admin/ work too.
+     The kit files in /kit are copied by `pnpm kit:export` from a tagged kit build; see kit/KIT_VERSION. --%>
+<% String ctx = request.getContextPath(); %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title><%= com.gigmarket.auth.Auth.esc(pageTitle) %></title>
+<link rel="preload" href="<%= ctx %>/kit/fonts/bricolage-grotesque-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="<%= ctx %>/kit/fonts/instrument-sans-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="<%= ctx %>/kit/kit.css">
+<link rel="stylesheet" href="<%= ctx %>/kit/kit-components.css">
+<link rel="stylesheet" href="<%= ctx %>/css/site.css">
+<script type="module" src="<%= ctx %>/kit/effects/auto.js"></script>

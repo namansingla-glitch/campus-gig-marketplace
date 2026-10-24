@@ -17,6 +17,16 @@
         <param-value>5242880</param-value> <!-- 5MB in bytes -->
     </context-param>
 
+    <!-- Read every page and include as UTF-8. Includes (.jspf) have no page directive of their own, so without this
+         Tomcat reads them as ISO-8859-1 and "·" comes out as "Â·". -->
+    <jsp-config>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <url-pattern>*.jspf</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+        </jsp-property-group>
+    </jsp-config>
+
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>

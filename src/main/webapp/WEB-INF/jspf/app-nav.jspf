@@ -1,0 +1,53 @@
+<%-- App nav (kit top nav + phone bottom tabs), by role from the session. Static include after kit-head.jspf;
+     set String navCurrent first ("gigs", "mine", "profile", "post" or "approvals"). Tabs: decisions §20t. --%>
+<%
+    String navRole = (String) session.getAttribute("userRole");
+    String navName = (String) session.getAttribute("userName");
+    String[][] navLinks;   // label, href, key
+    String[][] navTabs;    // label, href, key, icon
+    if ("poster".equals(navRole)) {
+        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"Your gigs", "/your-gigs", "mine"}};
+        navTabs = new String[][] {{"Gigs", "/browse-gigs", "gigs", "feed"}, {"Your gigs", "/your-gigs", "mine", "mine"}, {"Post", "/post-gig", "post", "post"}};
+    } else if ("student".equals(navRole)) {
+        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"My gigs", "/my-applications", "mine"}, {"Profile", "/profile", "profile"}};
+        navTabs = new String[][] {{"Gigs", "/browse-gigs", "gigs", "feed"}, {"My gigs", "/my-applications", "mine", "mine"}, {"Profile", "/profile", "profile", "profile"}};
+    } else if ("admin".equals(navRole)) {
+        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}, {"Approvals", "/admin/approvals", "approvals"}};
+        navTabs = null;
+    } else {
+        navLinks = new String[][] {{"Gigs", "/browse-gigs", "gigs"}};
+        navTabs = null;
+    }
+    String navWho = navName == null ? null : navName + ("poster".equals(navRole) ? " · faculty" : "admin".equals(navRole) ? " · admin" : " · student");
+%>
+<header class="k-top">
+  <a class="k-word" href="<%= ctx %>/<%= navRole == null ? "" : com.gigmarket.auth.Auth.home(navRole) %>">campus<span class="k-word__dot">.</span>gig</a>
+  <nav class="k-top__links" aria-label="Main">
+<% for (String[] l : navLinks) { %>
+    <a href="<%= ctx + l[1] %>"<%= l[2].equals(navCurrent) ? " aria-current=\"page\"" : "" %>><%= l[0] %></a>
+<% } %>
+  </nav>
+  <div class="k-top__acct">
+<% if (navRole == null) { %>
+    <a class="k-btn k-btn--ghost" href="<%= ctx %>/login.jsp">Log in</a>
+    <a class="k-btn" href="<%= ctx %>/register">Join</a>
+<% } else { %>
+    <span class="k-top__who"><%= com.gigmarket.auth.Auth.esc(navWho) %></span>
+<%   if ("poster".equals(navRole)) { %>
+    <a class="k-btn" href="<%= ctx %>/post-gig">Post a gig</a>
+<%   } %>
+    <a class="k-btn k-btn--ghost" href="<%= ctx %>/logout">Log out</a>
+<% } %>
+  </div>
+</header>
+<% if (navTabs != null) { %>
+<nav class="k-bottom k-bottom--fixed" aria-label="Main (phone)" style="--k-tabs:<%= navTabs.length %>">
+<%   for (String[] t : navTabs) { %>
+  <a href="<%= ctx + t[1] %>"<%= t[2].equals(navCurrent) ? " aria-current=\"page\"" : "" %>><svg viewBox="0 0 24 24" aria-hidden="true"><%=
+      "feed".equals(t[3]) ? "<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"1.5\"/>"
+    : "mine".equals(t[3]) ? "<path d=\"M8 6h11M8 12h11M8 18h11\"/><path d=\"M4 6h.01M4 12h.01M4 18h.01\"/>"
+    : "post".equals(t[3]) ? "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v8M8 12h8\"/>"
+    : "<circle cx=\"12\" cy=\"9\" r=\"3.5\"/><path d=\"M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5\"/>" %></svg><%= t[0] %></a>
+<%   } %>
+</nav>
+<% } %>

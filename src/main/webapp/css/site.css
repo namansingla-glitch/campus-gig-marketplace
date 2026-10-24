@@ -1,0 +1,17 @@
+/* Campus gig: page layout shared by the kit pages (landing, login, register). Kit tokens only: no hex,
+   no named colours. Components and effects come from kit/kit-components.css. */
+
+.page {
+  display: grid;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-block: var(--kit-space-4) var(--kit-space-10);
+  padding-left: max(var(--kit-space-4), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--kit-space-4), env(safe-area-inset-right, 0px));
+}
+
+/* A visible label for anything that is not real yet (GUIDELINES: no invented numbers). */
+.ex-note {
+  color: var(--kit-color-text-muted);
+  font-size: var(--kit-font-size-sm);
+}

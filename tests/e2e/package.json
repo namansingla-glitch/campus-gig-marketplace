@@ -1,0 +1,15 @@
+{
+  "name": "campus-gig-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser checks on the running app (Tomcat + MySQL in CI): every page in Chromium and WebKit, desktop and phone.",
+  "scripts": {
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "lighthouse": "13.4.1"
+  }
+}
