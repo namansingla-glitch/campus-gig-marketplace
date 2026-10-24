@@ -50,6 +50,7 @@ jobs:
         shell: bash
 
       - name: Start Tomcat with the app
+        id: tomcat
         run: |
           nohup mvn -B -ntp cargo:run > tomcat.log 2>&1 &
           for i in $(seq 1 90); do
@@ -63,9 +64,17 @@ jobs:
         working-directory: tests/e2e
         run: npm ci --no-audit --no-fund
 
-      - name: Let apt wait for the runner's own updates
-        # The runner's startup apt job holds the dpkg lock; Playwright's --with-deps would fail at once (kit, 24 Oct).
-        run: echo 'DPkg::Lock::Timeout "240";' | sudo tee /etc/apt/apt.conf.d/99-wait-for-lock
+      - name: Stop the runner's own apt updates and wait for the dpkg lock
+        # The runner's startup apt job holds the dpkg lock, sometimes for over 4 minutes; Playwright's --with-deps
+        # then fails at once ("Unable to acquire the dpkg frontend lock"; kit and campus gig, 24 Oct).
+        run: |
+          sudo systemctl stop unattended-upgrades.service apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+          echo 'DPkg::Lock::Timeout "240";' | sudo tee /etc/apt/apt.conf.d/99-wait-for-lock
+          for i in $(seq 1 120); do
+            sudo fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock >/dev/null 2>&1 || { echo "dpkg lock free after ${i}x5 s"; exit 0; }
+            sleep 5
+          done
+          echo "::warning::dpkg lock still held after 10 minutes"; ps aux | grep -E 'apt|dpkg' | grep -v grep | head -5
 
       - name: Install Playwright browsers (Chromium + WebKit)
         working-directory: tests/e2e
@@ -107,15 +116,15 @@ jobs:
 
       - name: Lighthouse (main pages, phone settings; scores as notices, limits once measured)
         id: lighthouse
-        if: success() || steps.browser.outcome == 'failure'
+        if: always() && steps.tomcat.outcome == 'success'
         working-directory: tests/e2e
         env:
           BASE: http://localhost:8080/gig-marketplace
         run: node lighthouse.mjs
 
       - name: Smoke test (join, log in, approvals, access rules)
-        # Runs even when a browser check or Lighthouse failed, so one red step does not hide the others.
-        if: success() || steps.browser.outcome == 'failure' || steps.lighthouse.outcome == 'failure'
+        # Runs whenever Tomcat started, even when a browser step or Lighthouse failed, so one red step does not hide the others.
+        if: always() && steps.tomcat.outcome == 'success'
         env:
           BASE: http://localhost:8080/gig-marketplace
           MYSQL: mysql -h127.0.0.1 -uroot -proot gig_marketplace
