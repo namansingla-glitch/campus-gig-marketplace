@@ -1,7 +1,7 @@
 <%-- Error page body (kit error page). Set errCode, errTitle, errBody (fixed text only) and errActions (markup) first.
      Static include after kit-head.jspf. Never shows the exception or anything from the request. --%>
 </head>
-<body class="k-board" data-skin="campus-board" data-theme="auto">
+<body class="k-board" data-skin="campus-board" data-theme="light">
 <div class="page page--app" data-kit-plate>
   <header class="k-top"><a class="k-word" href="<%= ctx %>/">campus<span class="k-word__dot">.</span>gig</a></header>
   <main class="app-main">

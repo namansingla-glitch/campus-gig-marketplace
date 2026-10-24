@@ -8,7 +8,7 @@
 <%@ include file="WEB-INF/jspf/kit-head.jspf" %>
 <link rel="stylesheet" href="<%= ctx %>/css/landing.css">
 </head>
-<body class="k-board" data-skin="campus-board" data-theme="auto">
+<body class="k-board" data-skin="campus-board" data-theme="light">
 <div class="page" data-kit-plate>
 
   <header class="k-top">

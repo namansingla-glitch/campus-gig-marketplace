@@ -13,7 +13,7 @@
 <%@ include file="WEB-INF/jspf/kit-head.jspf" %>
 <link rel="stylesheet" href="<%= ctx %>/css/auth.css">
 </head>
-<body class="k-board" data-skin="campus-board" data-theme="auto">
+<body class="k-board" data-skin="campus-board" data-theme="light">
 <div class="page auth">
   <header class="k-top">
     <a class="k-word" href="<%= ctx %>/">campus<span class="k-word__dot">.</span>gig</a>

@@ -10,7 +10,7 @@ A campus gig board. Faculty pin small paid tasks; students pick the ones that fi
 - **Faculty:** post gigs, review applicants on their own gigs, hire one or say “Not this time”, then mark the gig done when the work is in.
 - **A gig moves Open → In progress (someone hired) → Done (marked done).** Payment happens outside the site; nothing here says a gig was paid.
 - **Gamified rewards, from real work only:** 100 points per finished gig + 10 per ₹1,000 earned. Bronze below 500, Silver from 500, Gold from 2,000. Achievements show the day they were earned. Each student sees only their own place this month.
-- **Look:** built with Naman's design kit (Campus Board skin): a kraft pin board, paper notes, light and dark, works on phones and with scripts off.
+- **Look:** built with Naman's design kit (Campus Board skin): a kraft pin board, paper notes, light theme only for now (dark is on the list for later), works on phones and with scripts off.
 
 ## Tech
 
@@ -69,7 +69,7 @@ Log in again and you land on **Approvals**.
 - `mvn verify`: unit tests for password hashing, the email rules, join, log in, approvals, pay and dates, uploads, statuses, the post-a-gig rules and rewards.
 - `tests/smoke.sh`: drives a running app over HTTP: every page, join and log in, approvals, who can open what, apply → hire / not picked → mark done, portfolio downloads, form tokens, escaping, no invented figures and no Tailwind left.
 - `tests/e2e` (Playwright): every page as visitor, student and faculty in Chromium and WebKit (Safari's engine), desktop and phone, light and dark: no sideways scroll, axe accessibility check, the kit fonts load, one h1 and no heading jumps, tap targets at least 44 px, no console errors, still readable with scripts off, reduced motion. Run against a running app: `cd tests/e2e && npm ci && npx playwright install chromium webkit && BASE=http://localhost:8080/gig-marketplace npx playwright test`.
-- `tests/e2e/lighthouse.mjs`: Lighthouse scores for the main pages on phone settings.
+- `tests/e2e/lighthouse.mjs`: Lighthouse on the main pages (phone settings); CI fails below performance 85, accessibility 96, best practices 96, SEO 90 (set from the first measured run).
 - CI (`.github/workflows/ci.yml`) runs all of these on every push, with MySQL and Tomcat on GitHub's machines.
 
 ## Security notes

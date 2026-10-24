@@ -6,7 +6,11 @@ import * as chromeLauncher from 'chrome-launcher';
 import { chromium } from '@playwright/test';
 
 const BASE = (process.env.BASE ?? 'http://localhost:8080/gig-marketplace').replace(/\/$/, '');
-const LIMITS = {}; // e.g. { performance: 90, accessibility: 100 }, set from the first measured run
+// Set 24 Oct from the first two CI runs (40041391643 and 40043706577, phone settings): performance 92–96,
+// accessibility 96–100, best practices 96–100, SEO 90 on all five pages. Each floor is the lowest measured score,
+// except performance: it moved up to 2 points between those runs on shared CI machines, so it gets a margin
+// (92 → 85; the size of the margin is a judgment, not a measurement). Raise the floors as pages improve.
+const LIMITS = { performance: 85, accessibility: 96, 'best-practices': 96, seo: 90 };
 const PAGES = [
   { name: 'landing', path: '/' },
   { name: 'open gigs', path: '/browse-gigs' },

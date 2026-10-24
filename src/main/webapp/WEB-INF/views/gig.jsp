@@ -28,7 +28,7 @@
 <%@ include file="../jspf/kit-head.jspf" %>
 <link rel="stylesheet" href="<%= ctx %>/css/app.css">
 </head>
-<body class="k-board" data-skin="campus-board" data-theme="auto">
+<body class="k-board" data-skin="campus-board" data-theme="light">
 <div class="page page--app" data-kit-plate>
 <%@ include file="../jspf/app-nav.jspf" %>
   <main class="app-main">
