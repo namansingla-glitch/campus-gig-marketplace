@@ -96,7 +96,7 @@ jobs:
             const walk = (s) => { for (const c of s.suites ?? []) walk(c); for (const sp of s.specs ?? []) for (const t of sp.tests) {
               const p = t.projectName; per[p] ??= { ok: 0, run: 0 };
               const st = t.results.at(-1)?.status; if (st === "skipped") continue; per[p].run++;
-              if (st === "passed") per[p].ok++; else fails.push(`${p} › ${sp.title}: ${(t.results.at(-1)?.error?.message ?? st).split("\n").slice(0, 6).join(" | ").replace(/\x1b\[[0-9;]*m/g, "").slice(0, 600)}`);
+              if (st === "passed") per[p].ok++; else { const m = (t.results.at(-1)?.error?.message ?? st).replace(/\x1b\[[0-9;]*m/g, "").split("\n"); const got = m.filter((l) => /^\+\s+"/.test(l)).map((l) => l.replace(/^\+\s+/, "")); fails.push(`${p} › ${sp.title}: ${(got.length ? m[0] + " → " + got.join(" ; ") : m.slice(0, 6).join(" | ")).slice(0, 700)}`); }
             } };
             walk(r);
             const want = ["chromium-desktop", "chromium-phone", "webkit-desktop", "webkit-phone"];

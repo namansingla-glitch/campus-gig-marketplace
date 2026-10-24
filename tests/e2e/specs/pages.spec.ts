@@ -61,7 +61,8 @@ async function rules(page: Page) {
     await document.fonts.ready;
     if (!document.fonts.check('700 32px "Bricolage Grotesque"')) out.push('display font (Bricolage Grotesque) did not load');
     if (!document.fonts.check('400 16px "Instrument Sans"')) out.push('body font (Instrument Sans) did not load');
-    for (const t of Array.from(document.querySelectorAll('.k-btn, .k-bottom a, .k-top__links a, .k-chip'))) {
+    // Only things a person taps: the category tags on gig cards are labels, not buttons.
+    for (const t of Array.from(document.querySelectorAll('.k-btn, .k-bottom a, .k-top__links a, a.k-chip, label.k-chip'))) {
       const b = t.getBoundingClientRect();
       if (b.width > 0 && b.height < 44) { out.push(`tap target "${(t.textContent ?? '').trim()}" is ${Math.round(b.height)}px tall (want ≥ 44)`); break; }
     }
